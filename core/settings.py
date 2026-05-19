@@ -39,8 +39,8 @@ DEBUG = True
 
 #ALLOWED_HOSTS = []
 ALLOWED_HOSTS = [
-    'zoikobroadband.com',
-    'api.zoikobroadband.com',
+    'zoikotelecom.com',
+    'api.zoikotelecom.com',
     '34.147.150.254',
     'localhost',
     'http://localhost:3001',
@@ -194,11 +194,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3001",
-    "https://zoikobroadband-python.vercel.app",
+    "https://zoikotelecom-python.vercel.app",
     "http://34.147.150.254",
-    "https://api.zoikobroadband.com",
-    "https://zoikobroadband.com",
-    "https://react.zoikobroadband.com",
+    "https://api.zoikotelecom.com",
+    "https://zoikotelecom.com",
+    "https://react.zoikotelecom.com",
 ]
 
 #CORS_ALLOW_ALL_ORIGINS = True  # safe for now (you can restrict later)
