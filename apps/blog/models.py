@@ -24,6 +24,7 @@ class BlogPost(models.Model):
 
     featured_image = models.ImageField(upload_to='blog_images/', null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
