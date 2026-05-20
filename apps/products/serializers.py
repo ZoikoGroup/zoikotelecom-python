@@ -74,6 +74,7 @@ class ProductSerializer(serializers.ModelSerializer):
     attributes = ProductAttributeSerializer(many=True, read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
     variants = ProductVariantsSerializer(many=True, read_only=True)
+    
 
     class Meta:
         model = Product
