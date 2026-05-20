@@ -6,7 +6,6 @@ from django.shortcuts import get_object_or_404
 from .models import Plan, PlanCategory
 from .serializers import PlanSerializer
 
-
 class PlanListView(APIView):
     """
     GET /api/v1/plans/

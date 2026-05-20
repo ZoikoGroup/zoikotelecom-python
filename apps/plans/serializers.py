@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import Plan, PlanCategory, PlanVariation
 
-
 class PlanVariationSerializer(serializers.ModelSerializer):
     duration_display = serializers.ReadOnlyField()
     effective_bt_plan_id = serializers.ReadOnlyField()
