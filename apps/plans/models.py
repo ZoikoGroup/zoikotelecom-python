@@ -3,7 +3,6 @@ from django.utils.text import slugify
 from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 
-
 class PlanCategory(models.Model):
     """Groups plans into categories (e.g., Basic, Professional, Enterprise)."""
 
@@ -27,7 +26,6 @@ class PlanCategory(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
-
 
 class Plan(models.Model):
     """
