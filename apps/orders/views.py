@@ -80,6 +80,7 @@ class BTOrderCreateView(views.APIView):
             order.pk, order.external_id, order.bt_order_id, order.local_status,
         )
 
+
         return Response(
             {
                 "success": True,
@@ -103,7 +104,6 @@ class BTOrderRetrieveView(views.APIView):
             {"success": True, "data": BTOrderReadSerializer(order).data},
             status=status.HTTP_200_OK,
         )
-
 
 # ─── BT webhook (API 8) ───────────────────────────────────────────────────────
 

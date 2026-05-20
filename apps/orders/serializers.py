@@ -16,7 +16,6 @@ from rest_framework import serializers
 
 from .models import BTOrder, BTOrderEvent, BTOrderState, LocalStatus
 
-
 def _dec(value: Any, default: str = "0") -> Decimal:
     """Coerce loose JSON numbers/strings to Decimal safely."""
     if value is None or value == "":
@@ -83,6 +82,7 @@ class BTOrderCreateSerializer(serializers.Serializer):
     appointmentId    = serializers.CharField(max_length=64,  required=False, allow_blank=True)
     appointmentStart = serializers.CharField(required=False, allow_blank=True)
     appointmentEnd   = serializers.CharField(required=False, allow_blank=True)
+
 
     # Customer-side
     billingAddress   = _BillingAddressIn()
