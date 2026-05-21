@@ -81,14 +81,12 @@ class ProductViewSet(ReadOnlyModelViewSet):
         .all()
     )
     serializer_class = ProductSerializer
-    
 
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-
 
     filterset_class = ProductFilter
     search_fields = ['name', 'description']
