@@ -67,6 +67,7 @@ class ProductVariant(models.Model):
         Product, related_name="variants", on_delete=models.CASCADE
     )
 
+
     #  Store combination directly instead of FK
     storage = models.CharField(max_length=100)
     colour = models.CharField(max_length=100)
