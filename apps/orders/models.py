@@ -7,12 +7,10 @@ denormalised columns alongside them exist for indexed lookups and admin
 filtering. BTOrderEvent appends one row per state change (initial creation,
 BT webhook notifications, manual edits) — never overwritten.
 """
-
 from __future__ import annotations
 
 from django.db import models
 from django.utils import timezone
-
 
 # ─── Status / state choices ───────────────────────────────────────────────────
 
