@@ -7,7 +7,9 @@ from .views import (
     PlanByCategorySlugView,
 )
 
+
 app_name = "plans"
+
 
 urlpatterns = [
     # GET /api/v1/plans/                          → all plans

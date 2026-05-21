@@ -17,7 +17,6 @@
 
     if (fieldsets.length === 0 && inlineGroups.length === 0) return;
 
-
     // Build tab bar container
     const tabBar = document.createElement("div");
     tabBar.className = "plan-tab-bar";
@@ -54,7 +53,6 @@
 
     const tabBtns = [];
 
-    
     // Wrap all fieldsets into one "General" panel
     if (fieldsets.length) {
       const generalPanel = document.createElement("div");
