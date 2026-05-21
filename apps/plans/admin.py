@@ -143,6 +143,7 @@ class PlanVariationAdmin(admin.ModelAdmin):
         "is_active",
         "sort_order",
     )
+    
 
     list_filter = ("plan__category", "duration_unit", "is_active", "is_default")
     list_editable = ("is_active", "is_default", "sort_order")
