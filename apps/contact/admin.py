@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import ContactMessage
 
+
 @admin.register(ContactMessage)
 class ContactMessageAdmin(admin.ModelAdmin):
     list_display = ('first_name', 'last_name', 'email','phone', 'short_message','is_sent', 'created_at')
