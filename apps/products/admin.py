@@ -72,6 +72,7 @@ class ProductCategoryAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("name",)}
 
 
+
 # ---------------- PRODUCT ADMIN ----------------
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -93,6 +94,7 @@ class ProductVariantAdmin(admin.ModelAdmin):
 
     # THIS enables multiple images per variant
     inlines = [ProductVariantImageInline]
+
 
 
 # ---------------- PRODUCT IMAGE ADMIN ----------------
