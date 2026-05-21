@@ -8,11 +8,13 @@ class ProductFilter(django_filters.FilterSet):
         field_name='category__slug',
         lookup_expr='iexact'
     )
+    
 
     min_price = django_filters.NumberFilter(
         field_name='variants__regular_price',
         lookup_expr='gte'
     )
+
 
     max_price = django_filters.NumberFilter(
         field_name='variants__regular_price',
