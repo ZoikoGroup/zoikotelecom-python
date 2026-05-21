@@ -121,7 +121,6 @@ class PlanVariation(models.Model):
         default=DurationUnit.MONTH,
     )
 
-
     # Pricing
     price = models.DecimalField(
         _("Price"),
