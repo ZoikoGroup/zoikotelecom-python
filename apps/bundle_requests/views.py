@@ -43,6 +43,7 @@ Price: {instance.bundle_price}
         logger.error(f"Error sending bundle request email: {e}")
 
 
+
 @api_view(['POST'])
 def create_bundle_request(request):
     serializer = BundleRequestSerializer(data=request.data)
@@ -56,6 +57,7 @@ def create_bundle_request(request):
             args=(instance.id,),
             daemon=True
         ).start()
+
 
         return Response(
             {"message": "Request saved successfully"},
