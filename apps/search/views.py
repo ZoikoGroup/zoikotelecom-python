@@ -5,14 +5,11 @@ from rest_framework.response import Response
 from django.db.models import Q
 from django.utils.text import slugify
 
-
 # MODELS
 from apps.plans.models import Plan
 from apps.products.models import Product
 from apps.blog.models import BlogPost
 from apps.jobs.models import Job
-
-
 
 
 @api_view(['GET'])
