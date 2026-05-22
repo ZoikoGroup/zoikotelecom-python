@@ -10,13 +10,11 @@ from .models import (
     ProductVariantImage,
 )
 
-
 # ---------------- ATTRIBUTE INLINE ----------------
 class ProductAttributeInlineForm(forms.ModelForm):
     class Meta:
         model = ProductAttribute
         fields = ["storage", "colour", "condition"]
-
 
 class ProductAttributeInline(admin.TabularInline):
     model = ProductAttribute
