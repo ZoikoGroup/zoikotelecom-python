@@ -8,12 +8,14 @@ class Job(models.Model):
         (False, 'Inactive'),
     )
 
+
     title = models.CharField(max_length=200)
     subtitle = models.CharField(max_length=255, blank=True)
 
     positions = models.PositiveIntegerField(
         help_text="Number of open positions"
     )
+
 
     experience = models.CharField(
         max_length=100,
