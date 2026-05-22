@@ -190,10 +190,6 @@ def global_search(request):
 
         })
 
-
-
-
-
     return Response({
 
         "status": True,
