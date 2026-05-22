@@ -13,7 +13,6 @@ from __future__ import annotations
 from django.db import models
 from django.utils import timezone
 
-
 # ─── Status / state choices ───────────────────────────────────────────────────
 
 class LocalStatus(models.TextChoices):
@@ -22,7 +21,6 @@ class LocalStatus(models.TextChoices):
     PENDING = "pending", "Pending"           # BT returned 202 (async)
     UNKNOWN = "unknown", "Unknown"           # BT returned 2xx but not 201/202
     FAILED  = "failed",  "Failed"            # BT call failed but we still want a record
-
 
 class BTOrderState(models.TextChoices):
     """BT lifecycle states delivered via the webhook (API 8)."""
