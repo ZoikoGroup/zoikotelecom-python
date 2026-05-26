@@ -20,6 +20,7 @@ urlpatterns = [
 
     path("api/v1/", include("apps.coupons.api_urls")),
     path('api/contact/', include('apps.contact.urls')),
+    path('api/reseller/', include('apps.reseller.urls')),
     path('api/newsletter/', include('apps.newsletter.urls')),
     path('jobs/', include('apps.jobs.urls')),
 
