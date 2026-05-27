@@ -13,6 +13,7 @@ class SubscribeView(APIView):
     def post(self, request):
         email = request.data.get("email")
 
+
         if not email:
             return Response({
                 "status": False,
@@ -49,6 +50,7 @@ class SubscribeView(APIView):
             except Exception:
                 pass
 
+
             return Response({
                 "status": True,
                 "message": message,
@@ -63,6 +65,7 @@ class SubscribeView(APIView):
                 "status": False,
                 "message": "Subscription failed due to duplicate email."
             }, status=status.HTTP_400_BAD_REQUEST)
+
 
         except Exception as e:
             return Response({
