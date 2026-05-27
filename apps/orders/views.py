@@ -80,7 +80,6 @@ class BTOrderCreateView(views.APIView):
             order.pk, order.external_id, order.bt_order_id, order.local_status,
         )
 
-
         return Response(
             {
                 "success": True,
