@@ -83,7 +83,6 @@ class BTOrderCreateSerializer(serializers.Serializer):
     appointmentStart = serializers.CharField(required=False, allow_blank=True)
     appointmentEnd   = serializers.CharField(required=False, allow_blank=True)
 
-
     # Customer-side
     billingAddress   = _BillingAddressIn()
     shippingAddress  = _BillingAddressIn(required=False)
