@@ -3,7 +3,6 @@ from django.db import models
 from django.utils import timezone
 from apps.plans.models import Plan
 
-
 class Coupon(models.Model):
     FLAT = "flat"
     PERCENTAGE = "percentage"
@@ -49,6 +48,7 @@ class Coupon(models.Model):
         default=FLAT
     )
 
+
     is_use_once_per_customer = models.BooleanField(default=True)
 
     # ✅ MULTI PLANS
@@ -71,6 +71,7 @@ class Coupon(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
 
     class Meta:
         db_table = "coupons"
