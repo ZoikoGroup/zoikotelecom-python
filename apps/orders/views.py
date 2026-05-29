@@ -29,6 +29,7 @@ logger = logging.getLogger("apps.orders")
 
 # ─── Create + list ────────────────────────────────────────────────────────────
 
+
 class BTOrderCreateView(views.APIView):
     """POST /api/v1/bqorders/ — create from Next.js processOrderStripe payload."""
     permission_classes = [AllowAny]   # Next.js calls server-to-server (no user token).
@@ -96,6 +97,7 @@ class BTOrderRetrieveView(views.APIView):
     """GET /api/v1/bqorders/<external_id>/"""
     permission_classes = [AllowAny]
     authentication_classes: list = []
+
 
     def get(self, request, external_id: str, *args, **kwargs):
         order = get_object_or_404(BTOrder, external_id=external_id)
