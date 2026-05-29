@@ -1,9 +1,9 @@
 from rest_framework import serializers
 from .models import BlogPost
 
-
 class BlogPostSerializer(serializers.ModelSerializer):
     author = serializers.StringRelatedField()  # returns username
+
 
     class Meta:
         model = BlogPost
