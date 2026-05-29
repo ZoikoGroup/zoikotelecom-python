@@ -38,6 +38,7 @@ class SubscribeView(APIView):
             else:
                 message = "Successfully subscribed!"
 
+
             # Send confirmation email
             try:
                 send_mail(
@@ -49,7 +50,6 @@ class SubscribeView(APIView):
                 )
             except Exception:
                 pass
-
 
             return Response({
                 "status": True,
@@ -65,7 +65,6 @@ class SubscribeView(APIView):
                 "status": False,
                 "message": "Subscription failed due to duplicate email."
             }, status=status.HTTP_400_BAD_REQUEST)
-
 
         except Exception as e:
             return Response({
