@@ -4,6 +4,7 @@ from django_ckeditor_5.fields import CKEditor5Field
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
+
 User = get_user_model()
 
 class BlogPost(models.Model):
@@ -11,6 +12,7 @@ class BlogPost(models.Model):
         ('draft', 'Draft'),
         ('published', 'Published'),
     )
+
 
     title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
@@ -27,6 +29,7 @@ class BlogPost(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
 
     class Meta:
         ordering = ['-created_at']
