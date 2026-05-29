@@ -23,7 +23,6 @@ class Coupon(models.Model):
         (EXPIRED, "Expired"),
     ]
 
-
     id = models.BigAutoField(primary_key=True)
 
     name = models.CharField(max_length=255)
@@ -48,7 +47,6 @@ class Coupon(models.Model):
         default=FLAT
     )
 
-
     is_use_once_per_customer = models.BooleanField(default=True)
 
     # ✅ MULTI PLANS
@@ -71,7 +69,6 @@ class Coupon(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
 
     class Meta:
         db_table = "coupons"
