@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import BundleRequest
 
+
 class BundleRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = BundleRequest
@@ -13,6 +14,7 @@ class BundleRequestSerializer(serializers.ModelSerializer):
         if len(value) < 10:
             raise serializers.ValidationError("Phone number must be at least 10 digits")
         return value
+
 
     # Object-level validation
     def validate(self, data):
