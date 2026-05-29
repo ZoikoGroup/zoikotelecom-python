@@ -13,6 +13,7 @@ class SubscribeView(APIView):
     def post(self, request):
         email = request.data.get("email")
 
+
         if not email:
             return Response({
                 "status": False,
@@ -36,6 +37,7 @@ class SubscribeView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             else:
                 message = "Successfully subscribed!"
+
 
             # Send confirmation email
             try:

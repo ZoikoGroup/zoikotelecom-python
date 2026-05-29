@@ -3,7 +3,6 @@ from django.db import models
 from django.utils import timezone
 from apps.plans.models import Plan
 
-
 class Coupon(models.Model):
     FLAT = "flat"
     PERCENTAGE = "percentage"
@@ -23,7 +22,6 @@ class Coupon(models.Model):
         (INACTIVE, "Inactive"),
         (EXPIRED, "Expired"),
     ]
-
 
     id = models.BigAutoField(primary_key=True)
 

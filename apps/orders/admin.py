@@ -15,7 +15,6 @@ class BTOrderEventInline(admin.TabularInline):
     fields = readonly_fields
     ordering = ("-received_at",)
 
-
 @admin.register(BTOrder)
 class BTOrderAdmin(admin.ModelAdmin):
     list_display = (
@@ -108,7 +107,6 @@ class BTOrderAdmin(admin.ModelAdmin):
             '<span style="background:{};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">{}</span>',
             colour, label,
         )
-
 
 @admin.register(BTOrderEvent)
 class BTOrderEventAdmin(admin.ModelAdmin):

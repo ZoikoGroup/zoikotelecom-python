@@ -55,6 +55,7 @@ class LoginSerializer(serializers.Serializer):
         return user
 
 
+
 # ---------------- FORGOT PASSWORD ----------------
 class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -90,6 +91,7 @@ class UpdateUserSerializer(serializers.ModelSerializer):
         required=False,
         allow_blank=True
     )
+
 
     class Meta:
         model = User
