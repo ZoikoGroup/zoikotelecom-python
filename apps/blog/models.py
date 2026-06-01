@@ -31,6 +31,7 @@ class BlogPost(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
+
     class Meta:
         ordering = ['-created_at']
 
@@ -41,6 +42,7 @@ class BlogPost(models.Model):
 
     def __str__(self):
         return self.title
+    
 
     def get_absolute_url(self):
         return reverse('blog:blog_detail', kwargs={'slug': self.slug})
