@@ -3,7 +3,6 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
 
-
 # ---------------- REGISTER    dd----------------
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
@@ -29,7 +28,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
-
 # ---------------- LOGIN ----------------
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -53,8 +51,6 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("Account is not activated")
 
         return user
-
-
 
 # ---------------- FORGOT PASSWORD ----------------
 class ForgotPasswordSerializer(serializers.Serializer):
@@ -91,7 +87,6 @@ class UpdateUserSerializer(serializers.ModelSerializer):
         required=False,
         allow_blank=True
     )
-
 
     class Meta:
         model = User
