@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from .models import Job
 from .serializers import JobSerializer
 
+
 @api_view(['GET'])
 @authentication_classes([])        # 🔥 disables authentication
 @permission_classes([AllowAny])    # 🔥 allows public access
