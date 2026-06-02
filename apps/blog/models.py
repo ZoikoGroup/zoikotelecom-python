@@ -17,11 +17,13 @@ class BlogPost(models.Model):
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     content = CKEditor5Field()
-    
+
+
     # SEO fields
     seo_title = models.CharField(max_length=200, blank=True, null=True)
     seo_description = models.TextField(blank=True, null=True)
     seo_keywords = models.CharField(max_length=300, blank=True, null=True)
+
 
     featured_image = models.ImageField(upload_to='blog_images/', null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
