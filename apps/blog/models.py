@@ -4,7 +4,6 @@ from django_ckeditor_5.fields import CKEditor5Field
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-
 User = get_user_model()
 
 class BlogPost(models.Model):
@@ -30,8 +29,6 @@ class BlogPost(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-
-
     class Meta:
         ordering = ['-created_at']
 
@@ -42,7 +39,6 @@ class BlogPost(models.Model):
 
     def __str__(self):
         return self.title
-    
 
     def get_absolute_url(self):
         return reverse('blog:blog_detail', kwargs={'slug': self.slug})
