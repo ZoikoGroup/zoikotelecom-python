@@ -80,6 +80,7 @@ class ResetPasswordSerializer(serializers.Serializer):
 #             raise serializers.ValidationError("Email already in use")
 #         return value
 
+
 # serializers.py
 class UpdateUserSerializer(serializers.ModelSerializer):
     vc_enrollment_id = serializers.CharField(
@@ -104,6 +105,7 @@ class UpdateUserSerializer(serializers.ModelSerializer):
 
         # Update User fields
         instance = super().update(instance, validated_data)
+
 
         # Update VC ID if provided
         if vc_id is not None:
