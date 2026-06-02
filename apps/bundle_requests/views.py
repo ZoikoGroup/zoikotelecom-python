@@ -10,7 +10,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 def send_bundle_request_email(instance_id):
     """
     Runs in background thread so it doesn't block the API response.
@@ -38,6 +37,7 @@ Price: {instance.bundle_price}
         # Mark as sent ONLY after success
         instance.is_sent = True
         instance.save()
+
 
     except Exception as e:
         logger.error(f"Error sending bundle request email: {e}")
