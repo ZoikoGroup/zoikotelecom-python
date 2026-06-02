@@ -24,10 +24,12 @@ class Job(models.Model):
 
     location = models.CharField(max_length=100)
 
+
     status = models.BooleanField(
         default=True,
         choices=STATUS_CHOICES
     )
+
 
     description = models.TextField()
 
