@@ -6,6 +6,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 import threading  # Add this
 
+
 def send_contact_email(instance):
     """Runs in background thread so it doesn't block the response."""
     try:
@@ -31,6 +32,7 @@ Message:
         print("Email error:", e)
 
 
+
 @api_view(['POST'])
 def contact_us(request):
     serializer = ContactMessageSerializer(data=request.data)
@@ -47,6 +49,7 @@ def contact_us(request):
             "success": True,
             "message": "Thank you for contacting Golite. We will reach out soon."
         }, status=status.HTTP_201_CREATED)
+
 
     return Response({
         "success": False,
