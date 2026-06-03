@@ -3,6 +3,7 @@ from . import api_views
 
 app_name = "coupons_api"
 
+
 urlpatterns = [
     path(
         "preview-coupon/",
