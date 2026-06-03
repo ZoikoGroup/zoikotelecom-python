@@ -61,7 +61,6 @@ class ProductAttribute(models.Model):
             f"{self.product.name} - {self.storage} - {self.colour} - {self.condition}"
         )
 
-
 class ProductVariant(models.Model):
     product = models.ForeignKey(
         Product, related_name="variants", on_delete=models.CASCADE
