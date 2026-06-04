@@ -3,6 +3,7 @@ from .models import Product
 
 class ProductFilter(django_filters.FilterSet):
 
+
     category = django_filters.CharFilter(
         field_name='category__slug',
         lookup_expr='iexact'
@@ -32,6 +33,7 @@ class ProductFilter(django_filters.FilterSet):
         field_name='variants__storage',
         lookup_expr='iexact'
     )
+
 
     class Meta:
         model = Product
