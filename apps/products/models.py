@@ -3,7 +3,6 @@ from django.utils.text import slugify
 from django.core.validators import MinValueValidator
 import uuid
 
-
 class ProductCategory(models.Model):
     name = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(unique=True, blank=True)
@@ -66,7 +65,6 @@ class ProductVariant(models.Model):
         Product, related_name="variants", on_delete=models.CASCADE
     )
 
-
     #  Store combination directly instead of FK
     storage = models.CharField(max_length=100)
     colour = models.CharField(max_length=100)
@@ -111,6 +109,7 @@ class ProductVariantImage(models.Model):
     variant = models.ForeignKey(
         ProductVariant, related_name="images", on_delete=models.CASCADE
     )
+
 
     image = models.ImageField(upload_to="variant_images/")
     is_main = models.BooleanField(default=False)
