@@ -8,7 +8,6 @@ class Job(models.Model):
         (False, 'Inactive'),
     )
 
-
     title = models.CharField(max_length=200)
     subtitle = models.CharField(max_length=255, blank=True)
 
@@ -23,12 +22,10 @@ class Job(models.Model):
 
     location = models.CharField(max_length=100)
 
-
     status = models.BooleanField(
         default=True,
         choices=STATUS_CHOICES
     )
-
 
     description = models.TextField()
 
