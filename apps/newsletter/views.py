@@ -7,12 +7,10 @@ from django.db import IntegrityError
 from .models import Subscriber
 from .serializers import SubscriberSerializer
 
-
 class SubscribeView(APIView):
 
     def post(self, request):
         email = request.data.get("email")
-
 
         if not email:
             return Response({
@@ -37,7 +35,6 @@ class SubscribeView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             else:
                 message = "Successfully subscribed!"
-
 
             # Send confirmation email
             try:
@@ -65,6 +62,7 @@ class SubscribeView(APIView):
                 "status": False,
                 "message": "Subscription failed due to duplicate email."
             }, status=status.HTTP_400_BAD_REQUEST)
+
 
         except Exception as e:
             return Response({
