@@ -5,6 +5,7 @@ class PlanVariationSerializer(serializers.ModelSerializer):
     duration_display = serializers.ReadOnlyField()
     effective_bt_plan_id = serializers.ReadOnlyField()
     
+    
 
     class Meta:
         model = PlanVariation

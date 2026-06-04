@@ -8,6 +8,7 @@ class Job(models.Model):
         (False, 'Inactive'),
     )
 
+
     title = models.CharField(max_length=200)
     subtitle = models.CharField(max_length=255, blank=True)
 
