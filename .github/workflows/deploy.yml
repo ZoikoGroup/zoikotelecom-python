@@ -1,4 +1,4 @@
-name: Deploy to Production
+name: 🐍 Deploy Django to Production
 
 on:
   push:
@@ -6,48 +6,56 @@ on:
 
 jobs:
   deploy:
+    name: Deploy via SSH
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy via SSH
+      - name: 🔐 Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          script_stop: true
           script: |
             set -e
-            cd /var/www/html/zoikobroadband-python
+            PROJECT_DIR="/var/www/html/zoikotelecom-python"
+            VENV="$PROJECT_DIR/venv"
 
             # Fix ownership
-            sudo chown -R lennox:lennox /var/www/html/zoikobroadband-python
+            sudo chown -R lennox:lennox $PROJECT_DIR
 
-            git config --global --add safe.directory /var/www/html/zoikobroadband-python
+            # Safe git directory
+            git config --global --add safe.directory $PROJECT_DIR
 
-            # Clean deploy
+            # Pull latest code
+            cd $PROJECT_DIR
             git fetch origin
             git reset --hard origin/main
             git clean -fd
 
             # Ensure venv exists
-            if [ ! -d "venv" ]; then
-              python3 -m venv venv
+            if [ ! -d "$VENV" ]; then
+              python3 -m venv $VENV
             fi
 
-            # Recreate if broken
-            if [ ! -x "venv/bin/pip" ]; then
+            # Recreate venv if broken
+            if [ ! -x "$VENV/bin/pip" ]; then
               echo "Recreating venv..."
-              rm -rf venv
-              python3 -m venv venv
+              rm -rf $VENV
+              python3 -m venv $VENV
             fi
 
-            # Install deps
-            /var/www/html/zoikobroadband-python/venv/bin/pip install --upgrade pip --quiet
-            /var/www/html/zoikobroadband-python/venv/bin/pip install -r requirements.txt --quiet
+            # Install dependencies
+            $VENV/bin/pip install --upgrade pip --quiet
+            $VENV/bin/pip install -r $PROJECT_DIR/requirements.txt --quiet
 
-            # Django
-            /var/www/html/zoikobroadband-python/venv/bin/python manage.py migrate --fake-initial --no-input
-            /var/www/html/zoikobroadband-python/venv/bin/python manage.py collectstatic --no-input
+            # Django commands
+            $VENV/bin/python $PROJECT_DIR/manage.py migrate --no-input
+            $VENV/bin/python $PROJECT_DIR/manage.py collectstatic --no-input
 
-            # Restart
-            sudo systemctl restart zoikobroadband-django
+            # Restart service
+            sudo systemctl restart zoikotelecom-django
+
+            echo "✅ Django deployment complete!"
