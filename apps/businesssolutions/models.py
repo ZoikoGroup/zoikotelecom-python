@@ -4,12 +4,13 @@ from django.db import models
 class BusinessSolution(models.Model):
 
     SERVICE_CHOICES = (
-        ("business_broadband", "Business Broadband"),
-        ("leased_line", "Leased Line"),
-        ("voip", "VoIP"),
-        ("business_mobile", "Business Mobile"),
-        ("connectivity", "Connectivity"),
-        ("other", "Other"),
+    ("business_mobile", "Business Mobile"),
+    ("business_broadband", "Business Broadband"),
+    ("hosted_voice", "Hosted Voice"),
+    ("full_fibre", "Full Fibre"),
+    ("number_porting", "Number Porting"),
+    ("managed_connectivity", "Managed Connectivity"),
+    ("other", "Other")
     )
 
     full_name = models.CharField(max_length=255)
