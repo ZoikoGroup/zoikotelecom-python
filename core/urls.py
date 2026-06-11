@@ -25,6 +25,7 @@ urlpatterns = [
 
     path('search/', include('apps.search.urls')),
     path('business-solutions/', include('apps.businesssolutions.urls')),
+    path('reseller-form/', include("apps.resellerform.urls")),
 ]
 
 if settings.DEBUG:

@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_filters',
     'apps.businesssolutions',
+    'apps.resellerform',
 ]
 
 MIDDLEWARE = [

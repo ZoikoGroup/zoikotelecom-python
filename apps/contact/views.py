@@ -45,7 +45,7 @@ def contact_us(request):
 
         return Response({
             "success": True,
-            "message": "Thank you for contacting Golite. We will reach out soon."
+            "message": "Thank you for contacting Zoiko Telecom. We will reach out soon."
         }, status=status.HTTP_201_CREATED)
 
     return Response({
