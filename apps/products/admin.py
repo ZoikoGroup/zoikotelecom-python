@@ -86,7 +86,7 @@ class ProductAdmin(admin.ModelAdmin):
 # ---------------- VARIANT ADMIN ----------------
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
-    list_display = ["product", "storage", "colour", "condition"]
+    list_display = ["product", "duration", "condition","regular_price", "sale_price"]
     search_fields = ["product__name"]
     list_filter = ["product"]
 
