@@ -64,6 +64,20 @@ class ProductVariant(models.Model):
         Product, related_name="variants", on_delete=models.CASCADE
     )
 
+    DURATION_CHOICES = [
+    ("12", "12 Months"),
+    ("24", "24 Months"),
+    ("36", "36 Months"),
+    ("60", "60 Months"),
+    ("payg", "Pay As You Go"),
+    ]
+    duration = models.CharField(
+        max_length=20,
+        choices=DURATION_CHOICES,
+        blank=True,
+        null=True,
+    )
+
     #  Store combination directly instead of FK
     storage = models.CharField(max_length=100)
     colour = models.CharField(max_length=100)
@@ -98,10 +112,10 @@ class ProductVariant(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
-        unique_together = ("product", "storage", "colour", "condition")
+        unique_together = ("product","duration", "storage", "colour", "condition")
 
     def __str__(self):
-        return f"{self.product.name} - {self.storage}/{self.colour}/{self.condition}"
+        return f"{self.product.name} - {self.duration} - {self.storage}/{self.colour}/{self.condition}"
 
 
 class ProductVariantImage(models.Model):

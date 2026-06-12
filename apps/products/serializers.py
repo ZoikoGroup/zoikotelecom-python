@@ -42,12 +42,19 @@ class ProductAttributeSerializer(serializers.ModelSerializer):
 class ProductVariantsSerializer(serializers.ModelSerializer):
     images = ProductVariantImageSerializer(many=True, read_only=True)
 
+    duration_display = serializers.CharField(
+        source="get_duration_display",
+        read_only=True
+    )
+
     class Meta:
         model = ProductVariant
         fields = [
             'id',
             'storage',
             'colour',
+            'duration',
+            'duration_display',
             'condition',
             'regular_price',
             'sale_price',

@@ -186,7 +186,7 @@ REST_FRAMEWORK = {
            'rest_framework.filters.OrderingFilter',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 9,
+    'PAGE_SIZE': 12,
 }
 
 
@@ -237,21 +237,19 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # ===============================9999999999999
 # EMAIL / SMTP CONFIGURATION
 # ===============================
-# EMAIL_HOST = "smtpout.secureserver.net"
+
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
+EMAIL_HOST = "smtpout.secureserver.net"
+EMAIL_PORT = 465
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 
-EMAIL_HOST_USER = "rahelalakhan@gmail.com"
-EMAIL_HOST_PASSWORD = "jqhq ziub ixtj wrnq"
-# EMAIL_HOST_USER = "info@zoikogroup.com"
-# EMAIL_HOST_PASSWORD = "NoxxMC26070%!LGM"
+EMAIL_HOST_USER = "info@zoikogroup.com"
+EMAIL_HOST_PASSWORD = "NoxxMC26070%!LGM"
 
-# DEFAULT_FROM_EMAIL = "Zoiko Group <info@zoikogroup.com>"
+DEFAULT_FROM_EMAIL = "Zoiko Group <info@zoikogroup.com>"
 
 
 

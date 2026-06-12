@@ -5,7 +5,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 def home(request):
-    return HttpResponse("Zoikobroadband Django API is running")
+    return HttpResponse("Zoikotelecom Django API is running")
 
 urlpatterns = [
     path('', home),  # 👈 ROOT URL
