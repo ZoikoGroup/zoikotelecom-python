@@ -47,6 +47,7 @@ ALLOWED_HOSTS = [
     'http://localhost:3000',
     '127.0.0.1',
     '127.0.0.1:8000',
+    'react.zoikotelecom.com'
 ]
 
 
