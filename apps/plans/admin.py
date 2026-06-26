@@ -3,7 +3,14 @@ from django.utils.safestring  import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.core.exceptions import ValidationError
-from .models import Plan, PlanCategory, PlanVariation
+from .models import Plan, PlanCategory, PlanVariation, PlanFeature
+
+
+class PlanFeatureInline(admin.TabularInline):
+    model = PlanFeature
+    extra = 1
+    fields = ("text", "sort_order", "is_active")
+    ordering = ("sort_order", "id")
 
 
 class PlanVariationInline(admin.TabularInline):
@@ -75,6 +82,7 @@ class PlanAdmin(admin.ModelAdmin):
                     "name",
                     "slug",
                     "description",
+                    ("download_speed", "upload_speed"),
                     "bt_plan_id", 
                     "bt_plan_name",
                     "is_active", 
@@ -89,7 +97,7 @@ class PlanAdmin(admin.ModelAdmin):
         ),
     )
 
-    inlines = [PlanVariationInline]
+    inlines = [PlanFeatureInline, PlanVariationInline]
 
     class Media:
         css = {"all": ("plans/admin/plan_tabs.css",)}

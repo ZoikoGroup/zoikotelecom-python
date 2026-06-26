@@ -56,6 +56,21 @@ class Plan(models.Model):
         help_text=_("Plan name as it appears in ."),
     )
     description = models.TextField(_("Description"), blank=True)
+
+    # Speed (plan-level; does not change with contract length)
+    download_speed = models.PositiveIntegerField(
+        _("Download Speed (Mbps)"),
+        null=True,
+        blank=True,
+        help_text=_("Average download speed in Mbps. e.g. 40"),
+    )
+    upload_speed = models.PositiveIntegerField(
+        _("Upload Speed (Mbps)"),
+        null=True,
+        blank=True,
+        help_text=_("Average upload speed in Mbps. e.g. 10"),
+    )
+
     is_active = models.BooleanField(_("Active"), default=True)
     is_featured = models.BooleanField(_("Featured"), default=False)
     sort_order = models.PositiveIntegerField(_("Sort Order"), default=0)
@@ -79,6 +94,15 @@ class Plan(models.Model):
     def default_variation(self):
         """Returns the default (or cheapest) variation."""
         return self.variations.filter(is_active=True).order_by("price").first()
+
+    @property
+    def speed_display(self):
+        """Human-readable speed, e.g. '40/10 Mbps' or '40 Mbps'."""
+        if self.download_speed and self.upload_speed:
+            return f"{self.download_speed}/{self.upload_speed} Mbps"
+        if self.download_speed:
+            return f"{self.download_speed} Mbps"
+        return ""
 
 
 class DurationUnit(models.TextChoices):
@@ -191,3 +215,32 @@ class PlanVariation(models.Model):
     @property
     def duration_display(self):
         return f"{self.duration_value} {self.get_duration_unit_display()}"
+
+
+class PlanFeature(models.Model):
+    """
+    A single feature/benefit line shown on a Plan.
+    Admins can add as many features as they like per plan.
+    """
+
+    plan = models.ForeignKey(
+        Plan,
+        on_delete=models.CASCADE,
+        related_name="features",
+        verbose_name=_("Plan"),
+    )
+    text = models.CharField(
+        _("Feature"),
+        max_length=255,
+        help_text=_('A feature/benefit line, e.g. "No Long-Term Contracts".'),
+    )
+    is_active = models.BooleanField(_("Active"), default=True)
+    sort_order = models.PositiveIntegerField(_("Sort Order"), default=0)
+
+    class Meta:
+        verbose_name = _("Plan Feature")
+        verbose_name_plural = _("Plan Features")
+        ordering = ["sort_order", "id"]
+
+    def __str__(self):
+        return f"{self.plan.name} — {self.text}"
