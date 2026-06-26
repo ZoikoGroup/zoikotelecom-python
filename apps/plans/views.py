@@ -16,7 +16,7 @@ class PlanListView(APIView):
         plans = (
             Plan.objects.filter(is_active=True)
             .select_related("category")
-            .prefetch_related("variations")
+            .prefetch_related("variations", "features")
             .order_by("sort_order", "name")
         )
         serializer = PlanSerializer(plans, many=True)
@@ -34,7 +34,7 @@ class PlanByIdView(APIView):
 
     def get(self, request, pk):
         plan = get_object_or_404(
-            Plan.objects.select_related("category").prefetch_related("variations"),
+            Plan.objects.select_related("category").prefetch_related("variations", "features"),
             pk=pk,
             is_active=True,
         )
@@ -50,7 +50,7 @@ class PlanByBtPlanIdView(APIView):
 
     def get(self, request, bt_plan_id):
         plan = get_object_or_404(
-            Plan.objects.select_related("category").prefetch_related("variations"),
+            Plan.objects.select_related("category").prefetch_related("variations", "features"),
             bt_plan_id=bt_plan_id,
             is_active=True,
         )
@@ -71,7 +71,7 @@ class PlanByBtPlanNameView(APIView):
                 is_active=True,
             )
             .select_related("category")
-            .prefetch_related("variations")
+            .prefetch_related("variations", "features")
             .order_by("sort_order", "name")
         )
 
@@ -101,7 +101,7 @@ class PlanByCategorySlugView(APIView):
         plans = (
             Plan.objects.filter(category=category, is_active=True)
             .select_related("category")
-            .prefetch_related("variations")
+            .prefetch_related("variations", "features")
             .order_by("sort_order", "name")
         )
 
