@@ -38,10 +38,32 @@ class PaymentMethod(models.TextChoices):
     OTHER  = "other",  "Other"
 
 
+class OrderType(models.TextChoices):
+    """Which product family this order belongs to."""
+    BROADBAND = "broadband", "Broadband"
+    EE_MOBILE = "ee_mobile", "EE Mobile"
+    LANDLINE  = "landline",  "Landline"
+
+
+class MailStatus(models.TextChoices):
+    """Notification-email state for EE mobile / landline orders."""
+    NOT_REQUIRED = "not_required", "Not required"   # broadband — no email
+    PENDING      = "pending",      "Pending"         # required, not yet attempted
+    SENT         = "sent",         "Sent"
+    FAILED       = "failed",       "Mail not send"   # attempted, SMTP failed
+
+
 # ─── Main order ───────────────────────────────────────────────────────────────
 
 class BTOrder(models.Model):
     # ── Identity ────────────────────────────────────────────────────────────
+    order_type = models.CharField(
+        max_length=16,
+        choices=OrderType.choices,
+        default=OrderType.BROADBAND,
+        db_index=True,
+        help_text="Product family: broadband (BT Wholesale), EE mobile, or landline.",
+    )
     external_id = models.CharField(
         max_length=128,
         unique=True,
@@ -113,6 +135,27 @@ class BTOrder(models.Model):
     download_speed         = models.CharField(max_length=16,  blank=True)
     upload_speed           = models.CharField(max_length=16,  blank=True)
 
+    # ── EE mobile extras (denormalised; full data lives in cart_raw) ────────
+    data_allowance = models.CharField(max_length=64, blank=True,
+                                       help_text="EE mobile only, e.g. '50GB'.")
+    sim_type       = models.CharField(max_length=16, blank=True,
+                                       help_text="EE mobile only: 'eSIM' | 'pSIM'.")
+
+    # ── Notification email (EE mobile / landline only) ──────────────────────
+    mail_required = models.BooleanField(
+        default=False,
+        help_text="True for EE mobile / landline orders, which notify orders@zoikotelecom.com.",
+    )
+    mail_sent    = models.BooleanField(default=False)
+    mail_status  = models.CharField(
+        max_length=16,
+        choices=MailStatus.choices,
+        default=MailStatus.NOT_REQUIRED,
+        db_index=True,
+    )
+    mail_error   = models.TextField(blank=True, help_text="SMTP error if the email failed to send.")
+    mail_sent_at = models.DateTimeField(null=True, blank=True)
+
     # ── Appointment ─────────────────────────────────────────────────────────
     appointment_id    = models.CharField(max_length=64, blank=True, db_index=True)
     appointment_start = models.DateTimeField(null=True, blank=True)
@@ -164,6 +207,7 @@ class BTOrder(models.Model):
             models.Index(fields=["email", "-created_at"]),
             models.Index(fields=["bt_state", "-created_at"]),
             models.Index(fields=["local_status", "-created_at"]),
+            models.Index(fields=["order_type", "-created_at"]),
         ]
 
     def __str__(self) -> str:  # pragma: no cover - admin label

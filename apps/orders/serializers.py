@@ -14,7 +14,7 @@ from typing import Any
 from django.utils.dateparse import parse_datetime
 from rest_framework import serializers
 
-from .models import BTOrder, BTOrderEvent, BTOrderState, LocalStatus
+from .models import BTOrder, BTOrderEvent, BTOrderState, LocalStatus, OrderType, MailStatus
 
 def _dec(value: Any, default: str = "0") -> Decimal:
     """Coerce loose JSON numbers/strings to Decimal safely."""
@@ -76,6 +76,7 @@ class BTOrderCreateSerializer(serializers.Serializer):
 
     # BT-side
     externalId       = serializers.CharField(max_length=128)
+    orderType        = serializers.CharField(max_length=32, required=False, allow_blank=True, default="")
     btOrderId        = serializers.CharField(max_length=128, required=False, allow_blank=True)
     btStatus         = serializers.CharField(max_length=16,  required=False, allow_blank=True)
     btData           = serializers.JSONField(required=False, default=dict)
@@ -107,26 +108,53 @@ class BTOrderCreateSerializer(serializers.Serializer):
         product = first_item.get("product") or {}
         zoiko   = first_item.get("zoikoPlan") or {}
 
-        # Normalise local status from the BT route's status field.
-        bt_status_raw = (validated_data.get("btStatus") or "").lower()
-        local_status = {
-            "created": LocalStatus.CREATED,
-            "pending": LocalStatus.PENDING,
-        }.get(bt_status_raw, LocalStatus.UNKNOWN)
-
-        # Initial bt_state — BT acknowledges every successful order with "acknowledged"
-        # before its webhook starts pushing updates. Empty if local_status is FAILED.
-        initial_bt_state = (
-            BTOrderState.ACKNOWLEDGED.value
-            if local_status in (LocalStatus.CREATED, LocalStatus.PENDING)
-            else ""
+        # ── Order type (broadband | ee_mobile | landline) ───────────────────
+        # Prefer the explicit orderType from the client; fall back to the cart
+        # item's planType written by each plan page.
+        type_map = {
+            "broadband":        OrderType.BROADBAND,
+            "ee_mobile":        OrderType.EE_MOBILE,
+            "ee_mobile_manual": OrderType.EE_MOBILE,
+            "landline":         OrderType.LANDLINE,
+            "landline_manual":  OrderType.LANDLINE,
+        }
+        explicit_type = (validated_data.get("orderType") or "").strip().lower()
+        order_type = (
+            type_map.get(explicit_type)
+            or type_map.get(str(first_item.get("planType") or "").lower())
+            or OrderType.BROADBAND
         )
+        is_broadband = order_type == OrderType.BROADBAND
+
+        # ── Local status / BT state ─────────────────────────────────────────
+        if is_broadband:
+            bt_status_raw = (validated_data.get("btStatus") or "").lower()
+            local_status = {
+                "created": LocalStatus.CREATED,
+                "pending": LocalStatus.PENDING,
+            }.get(bt_status_raw, LocalStatus.UNKNOWN)
+            # BT acknowledges every successful order before its webhook starts.
+            initial_bt_state = (
+                BTOrderState.ACKNOWLEDGED.value
+                if local_status in (LocalStatus.CREATED, LocalStatus.PENDING)
+                else ""
+            )
+        else:
+            # EE mobile / landline are not placed with BT — they're created &
+            # paid here, then emailed to fulfilment. No BT state.
+            local_status = LocalStatus.CREATED
+            initial_bt_state = ""
+
+        # ── Notification email flags ────────────────────────────────────────
+        mail_required = order_type in (OrderType.EE_MOBILE, OrderType.LANDLINE)
+        mail_status = MailStatus.PENDING if mail_required else MailStatus.NOT_REQUIRED
 
         # Pass through anything the caller didn't model, for audit.
         raw_envelope = self.initial_data if isinstance(self.initial_data, dict) else {}
 
         order = BTOrder.objects.create(
             external_id  = validated_data["externalId"],
+            order_type   = order_type,
             bt_order_id  = validated_data.get("btOrderId") or "",
             local_status = local_status,
             bt_state     = initial_bt_state,
@@ -159,6 +187,14 @@ class BTOrderCreateSerializer(serializers.Serializer):
             contract_term       = _str(zoiko.get("contractType") or first_item.get("validity")),
             download_speed      = _str(product.get("download") or first_item.get("speed")),
             upload_speed        = _str(product.get("upload")),
+
+            # EE mobile extras
+            data_allowance = _str(first_item.get("dataAllowance")),
+            sim_type       = _str(first_item.get("simType")),
+
+            # Notification email tracking (view attempts the send after create)
+            mail_required = mail_required,
+            mail_status   = mail_status,
 
             # Appointment
             appointment_id    = _str(validated_data.get("appointmentId")),
@@ -207,14 +243,16 @@ class BTOrderReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = BTOrder
         fields = [
-            "id", "external_id", "bt_order_id",
+            "id", "external_id", "bt_order_id", "order_type",
             "local_status", "bt_state", "error_message",
             "first_name", "last_name", "email", "phone",
             "service_address_id", "service_postcode",
             "product_name", "product_offering_id", "contract_term",
+            "data_allowance", "sim_type",
             "appointment_id", "appointment_start", "appointment_end",
             "subtotal", "discount", "total", "currency",
             "payment_method", "agreed_to_terms",
+            "mail_required", "mail_sent", "mail_status", "mail_error", "mail_sent_at",
             "created_at", "updated_at",
         ]
         read_only_fields = fields
