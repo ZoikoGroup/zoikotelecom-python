@@ -13,11 +13,13 @@ from typing import Any
 
 from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status, views
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from .models import BTOrder, BTOrderEvent, BTOrderState
+from .emails import send_order_notification
+from .models import BTOrder, BTOrderEvent, BTOrderState, MailStatus
 from .serializers import (
     BTOrderCreateSerializer,
     BTOrderReadSerializer,
@@ -77,9 +79,30 @@ class BTOrderCreateView(views.APIView):
             )
 
         logger.info(
-            "[bqorders] ✅ Saved order id=%s external_id=%s bt_order_id=%s status=%s",
-            order.pk, order.external_id, order.bt_order_id, order.local_status,
+            "[bqorders] ✅ Saved order id=%s external_id=%s bt_order_id=%s status=%s type=%s",
+            order.pk, order.external_id, order.bt_order_id, order.local_status, order.order_type,
         )
+
+        # ── Notification email (EE mobile / landline only) ──────────────────
+        # Never blocks the save: on SMTP failure we record mail_status=FAILED
+        # (shown as "Mail not send" in admin) and still return 201.
+        if order.mail_required and not order.mail_sent:
+            ok, err = send_order_notification(order)
+            order.mail_sent    = ok
+            order.mail_status  = MailStatus.SENT if ok else MailStatus.FAILED
+            order.mail_error   = "" if ok else (err or "Unknown error")
+            order.mail_sent_at = timezone.now() if ok else None
+            order.save(update_fields=[
+                "mail_sent", "mail_status", "mail_error", "mail_sent_at", "updated_at",
+            ])
+            BTOrderEvent.objects.create(
+                order       = order,
+                external_id = order.external_id,
+                source      = BTOrderEvent.Source.SYSTEM,
+                event_type  = "NotificationEmail",
+                state       = "sent" if ok else "failed",
+                message     = "" if ok else (err or "Unknown error"),
+            )
 
         return Response(
             {
