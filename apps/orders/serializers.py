@@ -182,9 +182,15 @@ class BTOrderCreateSerializer(serializers.Serializer):
             service_qualifier    = _str(service.get("qualifier")),
 
             # Product summary
-            product_name        = _str(first_item.get("name") or zoiko.get("name")),
+            product_name        = _str(
+                first_item.get("name") or first_item.get("planName")
+                or first_item.get("planTitle") or zoiko.get("name")
+            ),
             product_offering_id = _str((product.get("offering") or {}).get("id") or product.get("id")),
-            contract_term       = _str(zoiko.get("contractType") or first_item.get("validity")),
+            contract_term       = _str(
+                zoiko.get("contractType") or first_item.get("validity")
+                or first_item.get("planDuration")
+            ),
             download_speed      = _str(product.get("download") or first_item.get("speed")),
             upload_speed        = _str(product.get("upload")),
 
