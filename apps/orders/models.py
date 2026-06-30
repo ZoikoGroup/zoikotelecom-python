@@ -275,3 +275,24 @@ class BTOrderEvent(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.event_type or self.state} @ {self.received_at:%Y-%m-%d %H:%M}"
+
+
+# ─── Proxy models ───────────────────────────────────────────────────────────────
+#
+# All orders live in the single BTOrder table (distinguished by `order_type`).
+# These proxies create separate admin sections — Broadband / EE Mobile / Landline
+# — without a second table or any schema change. Each proxy admin filters its
+# queryset to its own order_type (see admin.py).
+
+class EEMobileOrder(BTOrder):
+    class Meta:
+        proxy = True
+        verbose_name = "EE Mobile order"
+        verbose_name_plural = "EE Mobile orders"
+
+
+class LandlineOrder(BTOrder):
+    class Meta:
+        proxy = True
+        verbose_name = "Landline order"
+        verbose_name_plural = "Landline orders"
