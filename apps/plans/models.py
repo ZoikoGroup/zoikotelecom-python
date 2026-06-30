@@ -58,17 +58,19 @@ class Plan(models.Model):
     description = models.TextField(_("Description"), blank=True)
 
     # Speed (plan-level; does not change with contract length)
-    download_speed = models.PositiveIntegerField(
+    download_speed = models.FloatField(
         _("Download Speed (Mbps)"),
         null=True,
         blank=True,
-        help_text=_("Average download speed in Mbps. e.g. 40"),
+        validators=[MinValueValidator(0)],
+        help_text=_("Average download speed in Mbps. e.g. 73.6"),
     )
-    upload_speed = models.PositiveIntegerField(
+    upload_speed = models.FloatField(
         _("Upload Speed (Mbps)"),
         null=True,
         blank=True,
-        help_text=_("Average upload speed in Mbps. e.g. 10"),
+        validators=[MinValueValidator(0)],
+        help_text=_("Average upload speed in Mbps. e.g. 18.4"),
     )
 
     is_active = models.BooleanField(_("Active"), default=True)
@@ -97,11 +99,16 @@ class Plan(models.Model):
 
     @property
     def speed_display(self):
-        """Human-readable speed, e.g. '40/10 Mbps' or '40 Mbps'."""
+        """Human-readable speed, e.g. '73.6/18.4 Mbps' or '76 Mbps'."""
+        def fmt(value):
+            # Show 76 (not 76.0) but keep 73.6 as-is.
+            f = float(value)
+            return str(int(f)) if f.is_integer() else str(round(f, 2))
+
         if self.download_speed and self.upload_speed:
-            return f"{self.download_speed}/{self.upload_speed} Mbps"
+            return f"{fmt(self.download_speed)}/{fmt(self.upload_speed)} Mbps"
         if self.download_speed:
-            return f"{self.download_speed} Mbps"
+            return f"{fmt(self.download_speed)} Mbps"
         return ""
 
 
