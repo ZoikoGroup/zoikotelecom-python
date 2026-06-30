@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives, get_connection
 from django.utils import timezone
 
 logger = logging.getLogger("apps.orders")
@@ -128,12 +128,20 @@ def send_order_notification(order) -> tuple[bool, str]:
         subject = f"New {type_label} order — {order.external_id}"
         text_body, html_body = build_order_email_body(order)
 
+        # Hard timeout so a misconfigured / slow SMTP host can never hang the
+        # order-save request (which would let gunicorn kill the worker and
+        # return a 502 to the checkout). Falls back to 15s if unset.
+        timeout = getattr(settings, "ORDERS_EMAIL_TIMEOUT", None) \
+            or getattr(settings, "EMAIL_TIMEOUT", None) or 15
+        connection = get_connection(timeout=timeout)
+
         msg = EmailMultiAlternatives(
             subject=subject,
             body=text_body,
             from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
             to=[_orders_inbox()],
             reply_to=[order.email] if order.email else None,
+            connection=connection,
         )
         msg.attach_alternative(html_body, "text/html")
         sent = msg.send(fail_silently=False)
