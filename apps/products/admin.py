@@ -28,12 +28,34 @@ class ProductAttributeInline(admin.TabularInline):
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 1
+    fields = ["image", "is_main", "thumbnail_preview"]
+    readonly_fields = ["thumbnail_preview"]
+
+    def thumbnail_preview(self, obj):
+        if obj.pk and obj.image:
+            return mark_safe(
+                f'<img src="{obj.image.url}" style="height:60px;width:60px;object-fit:cover;border-radius:4px;" />'
+            )
+        return "-"
+
+    thumbnail_preview.short_description = "Preview"
 
 
 # ---------------- VARIANT IMAGE INLINE ----------------
 class ProductVariantImageInline(admin.TabularInline):
     model = ProductVariantImage
     extra = 1
+    fields = ["image", "is_main", "thumbnail_preview"]
+    readonly_fields = ["thumbnail_preview"]
+
+    def thumbnail_preview(self, obj):
+        if obj.pk and obj.image:
+            return mark_safe(
+                f'<img src="{obj.image.url}" style="height:60px;width:60px;object-fit:cover;border-radius:4px;" />'
+            )
+        return "-"
+
+    thumbnail_preview.short_description = "Preview"
 
 
 # ---------------- VARIANT INLINE INSIDE PRODUCT ----------------
@@ -86,12 +108,34 @@ class ProductCategoryAdmin(admin.ModelAdmin):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     fieldsets = (("General", {"fields": ("category", "name", "description", "slug")}),)
+    list_display = ["name", "category", "category_thumbnail", "thumbnail_preview"]
+    list_filter = ["category"]
+    search_fields = ["name"]
 
     inlines = [
         ProductImageInline,
         ProductAttributeInline,
         ProductVariantInline,
     ]
+
+    def category_thumbnail(self, obj):
+        if obj.category and obj.category.image:
+            return mark_safe(
+                f'<img src="{obj.category.image.url}" style="height:40px;width:40px;object-fit:cover;border-radius:4px;" />'
+            )
+        return "-"
+
+    category_thumbnail.short_description = "Category Image"
+
+    def thumbnail_preview(self, obj):
+        main_image = obj.images.filter(is_main=True).first() or obj.images.first()
+        if main_image:
+            return mark_safe(
+                f'<img src="{main_image.image.url}" style="height:40px;width:40px;object-fit:cover;border-radius:4px;" />'
+            )
+        return "-"
+
+    thumbnail_preview.short_description = "Product Image"
 
 
 # ---------------- VARIANT ADMIN ----------------
@@ -106,17 +150,5 @@ class ProductVariantAdmin(admin.ModelAdmin):
 
 
 
-# ---------------- PRODUCT IMAGE ADMIN ----------------
-@admin.register(ProductImage)
-class ProductImageAdmin(admin.ModelAdmin):
-    list_display = ["product", "thumbnail_preview", "is_main"]
-    list_filter = ["is_main"]
-
-    def thumbnail_preview(self, obj):
-        if obj.image:
-            return mark_safe(
-                f'<img src="{obj.image.url}" style="height:40px;width:40px;object-fit:cover;border-radius:4px;" />'
-            )
-        return "-"
-
-    thumbnail_preview.short_description = "Thumbnail"
+# ProductImage is intentionally NOT registered as a standalone admin menu.
+# Images are managed inline from the Product admin page (see ProductImageInline above).
