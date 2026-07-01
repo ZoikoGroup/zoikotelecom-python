@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     'django_filters',
     'apps.businesssolutions',
     'apps.resellerform',
+    'apps.reviews',
 ]
 
 MIDDLEWARE = [
