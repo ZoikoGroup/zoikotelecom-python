@@ -70,7 +70,7 @@ class ProductVariantsSerializer(serializers.ModelSerializer):
 class ProductCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductCategory
-        fields = ['id', 'name', 'slug']
+        fields = ['id', 'name', 'slug', 'image']
 
 
 # -----------------------------
