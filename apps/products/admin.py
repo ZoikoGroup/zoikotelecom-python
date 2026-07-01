@@ -65,10 +65,20 @@ class ProductVariantInline(admin.StackedInline):
 # ---------------- CATEGORY ADMIN ----------------
 @admin.register(ProductCategory)
 class ProductCategoryAdmin(admin.ModelAdmin):
-    list_display = ["name", "is_active", "created_at"]
+    list_display = ["name", "thumbnail_preview", "is_active", "created_at"]
     search_fields = ["name"]
     list_filter = ["is_active"]
     prepopulated_fields = {"slug": ("name",)}
+    fields = ["name", "slug", "image", "is_active"]
+
+    def thumbnail_preview(self, obj):
+        if obj.image:
+            return mark_safe(
+                f'<img src="{obj.image.url}" style="height:40px;width:40px;object-fit:cover;border-radius:4px;" />'
+            )
+        return "-"
+
+    thumbnail_preview.short_description = "Thumbnail"
 
 
 
@@ -99,5 +109,14 @@ class ProductVariantAdmin(admin.ModelAdmin):
 # ---------------- PRODUCT IMAGE ADMIN ----------------
 @admin.register(ProductImage)
 class ProductImageAdmin(admin.ModelAdmin):
-    list_display = ["product", "image", "is_main"]
+    list_display = ["product", "thumbnail_preview", "is_main"]
     list_filter = ["is_main"]
+
+    def thumbnail_preview(self, obj):
+        if obj.image:
+            return mark_safe(
+                f'<img src="{obj.image.url}" style="height:40px;width:40px;object-fit:cover;border-radius:4px;" />'
+            )
+        return "-"
+
+    thumbnail_preview.short_description = "Thumbnail"

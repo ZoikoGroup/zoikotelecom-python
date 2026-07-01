@@ -6,6 +6,11 @@ import uuid
 class ProductCategory(models.Model):
     name = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(unique=True, blank=True)
+    image = models.ImageField(
+        upload_to="category_images/",
+        null=True,
+        blank=True,
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

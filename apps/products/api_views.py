@@ -1,10 +1,31 @@
 from rest_framework import generics, filters
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Prefetch
 
-from .models import Product, ProductCategory
+from .models import Product, ProductCategory, ProductImage, ProductVariant, ProductVariantImage
 from .serializers import ProductSerializer, ProductCategorySerializer
 from .filters import ProductFilter
+
+
+def _product_prefetches():
+    """Shared prefetches, ordered so the 'main' image comes first for thumbnail use."""
+    return [
+        'attributes',
+        Prefetch(
+            'images',
+            queryset=ProductImage.objects.order_by('-is_main', 'id'),
+        ),
+        Prefetch(
+            'variants',
+            queryset=ProductVariant.objects.prefetch_related(
+                Prefetch(
+                    'images',
+                    queryset=ProductVariantImage.objects.order_by('-is_main', 'id'),
+                )
+            ),
+        ),
+    ]
 
 
 # -----------------------------
@@ -14,12 +35,7 @@ class ProductListAPIView(generics.ListAPIView):
     queryset = (
         Product.objects
         .select_related('category')
-        .prefetch_related(
-            'attributes',
-            'images',
-            'variants',
-            'variants__images'
-        )
+        .prefetch_related(*_product_prefetches())
         .distinct()
         .all()
     )
@@ -44,12 +60,7 @@ class ProductDetailAPIView(generics.RetrieveAPIView):
     queryset = (
         Product.objects
         .select_related('category')
-        .prefetch_related(
-            'attributes',
-            'images',
-            'variants',
-            'variants__images'
-        )
+        .prefetch_related(*_product_prefetches())
         .all()
     )
     serializer_class = ProductSerializer
@@ -71,12 +82,7 @@ class ProductViewSet(ReadOnlyModelViewSet):
     queryset = (
         Product.objects
         .select_related('category')
-        .prefetch_related(
-            'attributes',
-            'images',
-            'variants',
-            'variants__images'
-        )
+        .prefetch_related(*_product_prefetches())
         .distinct()
         .all()
     )
