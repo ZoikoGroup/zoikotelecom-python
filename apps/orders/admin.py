@@ -5,7 +5,7 @@ from django.utils.html import format_html
 from .emails import send_order_notification
 from .models import (
     BTOrder, BTOrderEvent, MailStatus, OrderType,
-    EEMobileOrder, LandlineOrder,
+    EEMobileOrder, LandlineOrder, AccessoriesOrder,
 )
 
 
@@ -236,6 +236,52 @@ class LandlineOrderAdmin(BaseOrderAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(order_type=OrderType.LANDLINE)
+
+
+# ─── Accessories (physical products — no BT, no email) ────────────────────────
+
+@admin.register(AccessoriesOrder)
+class AccessoriesOrderAdmin(BaseOrderAdmin):
+    list_display = (
+        "external_id", "email", "product_name",
+        "total", "created_at",
+    )
+    list_filter = ("payment_method", "created_at")
+    fieldsets = (
+        ("Identity", {
+            "fields": ("order_type", "external_id", "local_status", "error_message"),
+        }),
+        ("Customer", {
+            "fields": (
+                "first_name", "last_name", "email", "phone", "company_name",
+                ("billing_street", "billing_house_number"),
+                ("billing_city", "billing_region"),
+                ("billing_state", "billing_zip"),
+            ),
+        }),
+        ("Product", {
+            "fields": ("product_name",),
+        }),
+        ("Shipping", {
+            "fields": ("shipping_address_raw",),
+        }),
+        ("Payment", {
+            "fields": (
+                ("subtotal", "discount", "total"), "currency",
+                "payment_method", "agreed_to_terms",
+                ("coupon_code", "coupon_type", "coupon_discount"),
+                "client_created_at",
+            ),
+        }),
+        ("Raw (audit only — do not edit)", {
+            "classes": ("collapse",),
+            "fields": ("cart_raw", "billing_address_raw", "totals_raw", "request_payload_raw"),
+        }),
+        ("Timestamps", {"fields": ("created_at", "updated_at")}),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(order_type=OrderType.ACCESSORIES)
 
 
 # ─── Events ───────────────────────────────────────────────────────────────────
