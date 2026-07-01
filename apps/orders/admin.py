@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils import timezone
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from .emails import send_order_notification
 from .models import (
@@ -51,7 +52,7 @@ class BaseOrderAdmin(admin.ModelAdmin):
     @admin.display(description="Mail", ordering="mail_status")
     def mail_state_badge(self, obj):
         if not obj.mail_required:
-            return format_html('<span style="color:#999;">—</span>')
+            return mark_safe('<span style="color:#999;">—</span>')
         if obj.mail_status == MailStatus.SENT:
             colour, label = "#0a0", "Sent"
         elif obj.mail_status == MailStatus.FAILED:
@@ -243,10 +244,13 @@ class LandlineOrderAdmin(BaseOrderAdmin):
 @admin.register(AccessoriesOrder)
 class AccessoriesOrderAdmin(BaseOrderAdmin):
     list_display = (
-        "external_id", "email", "product_name",
+        "product_thumb", "external_id", "email", "product_name",
         "total", "created_at",
     )
+    list_display_links = ("external_id", "product_name")
     list_filter = ("payment_method", "created_at")
+    readonly_fields = BaseOrderAdmin.readonly_fields + ("product_image",)
+
     fieldsets = (
         ("Identity", {
             "fields": ("order_type", "external_id", "local_status", "error_message"),
@@ -260,7 +264,7 @@ class AccessoriesOrderAdmin(BaseOrderAdmin):
             ),
         }),
         ("Product", {
-            "fields": ("product_name",),
+            "fields": ("product_image", "product_name"),
         }),
         ("Shipping", {
             "fields": ("shipping_address_raw",),
@@ -282,6 +286,41 @@ class AccessoriesOrderAdmin(BaseOrderAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(order_type=OrderType.ACCESSORIES)
+
+    # ── Image helpers (URL lives in cart_raw[*].image) ────────────────────────
+    @staticmethod
+    def _first_image_url(obj):
+        for it in obj.cart_raw or []:
+            if isinstance(it, dict) and it.get("image"):
+                url = str(it["image"])
+                # Make relative media paths absolute-ish so they resolve in admin.
+                if not url.startswith(("http://", "https://", "/")):
+                    url = "/" + url
+                return url
+        return ""
+
+    @admin.display(description="Image")
+    def product_thumb(self, obj):
+        url = self._first_image_url(obj)
+        if not url:
+            return mark_safe('<span style="color:#999;">—</span>')
+        return format_html(
+            '<img src="{}" style="height:44px;width:44px;object-fit:contain;'
+            'border-radius:6px;border:1px solid #eee;background:#fff;" />',
+            url,
+        )
+
+    @admin.display(description="Product image")
+    def product_image(self, obj):
+        url = self._first_image_url(obj)
+        if not url:
+            return mark_safe('<span style="color:#999;">No image</span>')
+        return format_html(
+            '<a href="{0}" target="_blank" rel="noopener">'
+            '<img src="{0}" style="max-height:160px;max-width:160px;object-fit:contain;'
+            'border-radius:10px;border:1px solid #eee;background:#fff;padding:4px;" /></a>',
+            url,
+        )
 
 
 # ─── Events ───────────────────────────────────────────────────────────────────
