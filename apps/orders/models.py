@@ -40,9 +40,10 @@ class PaymentMethod(models.TextChoices):
 
 class OrderType(models.TextChoices):
     """Which product family this order belongs to."""
-    BROADBAND = "broadband", "Broadband"
-    EE_MOBILE = "ee_mobile", "EE Mobile"
-    LANDLINE  = "landline",  "Landline"
+    BROADBAND   = "broadband",   "Broadband"
+    EE_MOBILE   = "ee_mobile",   "EE Mobile"
+    LANDLINE    = "landline",    "Landline"
+    ACCESSORIES = "accessories", "Accessories"
 
 
 class MailStatus(models.TextChoices):
@@ -296,3 +297,10 @@ class LandlineOrder(BTOrder):
         proxy = True
         verbose_name = "Landline order"
         verbose_name_plural = "Landline orders"
+
+
+class AccessoriesOrder(BTOrder):
+    class Meta:
+        proxy = True
+        verbose_name = "Accessories order"
+        verbose_name_plural = "Accessories orders"

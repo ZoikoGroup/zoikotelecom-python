@@ -117,11 +117,14 @@ class BTOrderCreateSerializer(serializers.Serializer):
             "ee_mobile_manual": OrderType.EE_MOBILE,
             "landline":         OrderType.LANDLINE,
             "landline_manual":  OrderType.LANDLINE,
+            "accessories":      OrderType.ACCESSORIES,
+            "accessory":        OrderType.ACCESSORIES,
         }
         explicit_type = (validated_data.get("orderType") or "").strip().lower()
         order_type = (
             type_map.get(explicit_type)
             or type_map.get(str(first_item.get("planType") or "").lower())
+            or type_map.get(str(first_item.get("category") or "").lower())
             or OrderType.BROADBAND
         )
         is_broadband = order_type == OrderType.BROADBAND
