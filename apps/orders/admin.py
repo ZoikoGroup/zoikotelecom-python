@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils import timezone
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 
 from .emails import send_order_notification
@@ -316,14 +316,12 @@ class BusinessLandlineOrderAdmin(BaseOrderAdmin):
             ("6. Hardware",       cfg.get("hardware"),     money(cfg.get("hardwarePrice")) if cfg.get("hardwarePrice") else ""),
         ]
 
-        body = "".join(
-            format_html(
-                '<tr><th style="text-align:left;padding:4px 14px 4px 0;color:#555;font-weight:600;white-space:nowrap;">{}</th>'
-                '<td style="padding:4px 14px 4px 0;">{}</td>'
-                '<td style="padding:4px 0;color:#0a7;font-weight:600;">{}</td></tr>',
-                label, value if value else "—", extra,
-            )
-            for (label, value, extra) in rows
+        body = format_html_join(
+            "",
+            '<tr><th style="text-align:left;padding:4px 14px 4px 0;color:#555;font-weight:600;white-space:nowrap;">{}</th>'
+            '<td style="padding:4px 14px 4px 0;">{}</td>'
+            '<td style="padding:4px 0;color:#0a7;font-weight:600;">{}</td></tr>',
+            ((label, value if value else "—", extra) for (label, value, extra) in rows),
         )
         summary = format_html(
             '<tr><th style="text-align:left;padding:8px 14px 4px 0;color:#111;font-weight:700;border-top:1px solid #eee;">Monthly</th>'
@@ -333,7 +331,10 @@ class BusinessLandlineOrderAdmin(BaseOrderAdmin):
             '<td></td><td style="padding:2px 0;color:#111;font-weight:700;">{}</td></tr>',
             money(cfg.get("monthlyPrice")), money(obj.total),
         )
-        return format_html('<table style="border-collapse:collapse;font-size:13px;">{}{}</table>', body, summary)
+        return format_html(
+            '<table style="border-collapse:collapse;font-size:13px;">{}{}</table>',
+            mark_safe(body), mark_safe(summary),
+        )
 
 
 # ─── Accessories (physical products — no BT, no email) ────────────────────────
