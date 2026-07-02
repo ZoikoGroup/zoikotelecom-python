@@ -307,3 +307,13 @@ class BTWebhookSerializer(serializers.Serializer):
                 "event.productOrder must contain externalId or id."
             )
         return attrs
+
+
+# ─── Dashboard serializers ───────────────────────────────────────────────────
+
+class MyOrderSerializer(BTOrderReadSerializer):
+    """Order rows for the customer dashboard — adds the raw cart so configured
+    products (e.g. Business Landline) can show their full breakdown."""
+    class Meta(BTOrderReadSerializer.Meta):
+        fields = BTOrderReadSerializer.Meta.fields + ["cart_raw"]
+        read_only_fields = fields

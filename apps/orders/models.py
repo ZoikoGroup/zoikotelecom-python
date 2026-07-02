@@ -320,3 +320,6 @@ class PhoneEquipmentOrder(BTOrder):
         proxy = True
         verbose_name = "Phone & Equipment order"
         verbose_name_plural = "Phone & Equipment orders"
+
+
+# ─── Advance payment (customer pre-pays toward their next bill) ───────────────

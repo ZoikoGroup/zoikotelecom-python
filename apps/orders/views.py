@@ -215,3 +215,38 @@ class BTOrderWebhookView(views.APIView):
             {"status": 200, "message": "Notification received successfully"},
             status=status.HTTP_200_OK,
         )
+
+
+# ─── Customer dashboard ──────────────────────────────────────────────────────
+
+from django.conf import settings
+from rest_framework.permissions import IsAuthenticated
+
+from .models import OrderType
+from .serializers import MyOrderSerializer
+
+
+class MyOrdersView(views.APIView):
+    """GET /api/v1/my-orders/ — all orders for the logged-in user (by email),
+    across every product family, plus a grouped view."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        email = (getattr(request.user, "email", "") or "").strip()
+        qs = (
+            BTOrder.objects.filter(email__iexact=email).order_by("-created_at")
+            if email else BTOrder.objects.none()
+        )
+        rows = MyOrderSerializer(qs, many=True).data
+
+        grouped: dict[str, list] = {}
+        for row in rows:
+            grouped.setdefault(row["order_type"], []).append(row)
+
+        return Response({
+            "success": True,
+            "email": email,
+            "count": len(rows),
+            "orders": rows,
+            "grouped": grouped,
+        })
