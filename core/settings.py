@@ -207,7 +207,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 #CORS_ALLOW_ALL_ORIGINS = True  # safe for now (you can restrict later)
-
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
