@@ -6,7 +6,7 @@ from django.utils.safestring import mark_safe
 from .emails import send_order_notification
 from .models import (
     BTOrder, BTOrderEvent, MailStatus, OrderType,
-    EEMobileOrder, LandlineOrder, AccessoriesOrder,
+    EEMobileOrder, LandlineOrder, AccessoriesOrder, PhoneEquipmentOrder,
 )
 
 
@@ -324,6 +324,20 @@ class AccessoriesOrderAdmin(BaseOrderAdmin):
 
 
 # ─── Events ───────────────────────────────────────────────────────────────────
+
+# ─── Phone & Equipment (physical products — no BT, no email) ──────────────────
+
+@admin.register(PhoneEquipmentOrder)
+class PhoneEquipmentOrderAdmin(AccessoriesOrderAdmin):
+    """Same layout as Accessories (image thumbnail, no BT/mail), filtered to
+    the phone_equipment order type."""
+
+    def get_queryset(self, request):
+        # Skip AccessoriesOrderAdmin's filter; apply our own.
+        return super(AccessoriesOrderAdmin, self).get_queryset(request).filter(
+            order_type=OrderType.PHONE_EQUIPMENT
+        )
+
 
 @admin.register(BTOrderEvent)
 class BTOrderEventAdmin(admin.ModelAdmin):
