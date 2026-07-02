@@ -119,6 +119,8 @@ class BTOrderCreateSerializer(serializers.Serializer):
             "landline_manual":  OrderType.LANDLINE,
             "accessories":      OrderType.ACCESSORIES,
             "accessory":        OrderType.ACCESSORIES,
+            "phone_equipment":  OrderType.PHONE_EQUIPMENT,
+            "phone-equipment":  OrderType.PHONE_EQUIPMENT,
         }
         explicit_type = (validated_data.get("orderType") or "").strip().lower()
         order_type = (
