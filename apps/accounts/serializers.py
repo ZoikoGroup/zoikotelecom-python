@@ -68,6 +68,35 @@ class ResetPasswordSerializer(serializers.Serializer):
         return attrs
 
 
+# ---------------- CHANGE PASSWORD (logged-in user) ----------------
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, validators=[validate_password])
+    new_password2 = serializers.CharField(write_only=True)
+
+    def validate_current_password(self, value):
+        user = self.context["request"].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Current password is incorrect.")
+        return value
+
+    def validate(self, attrs):
+        if attrs["new_password"] != attrs["new_password2"]:
+            raise serializers.ValidationError({"new_password2": "New passwords do not match."})
+        if attrs["new_password"] == attrs["current_password"]:
+            raise serializers.ValidationError(
+                {"new_password": "New password must be different from current password."}
+            )
+        return attrs
+
+    def save(self, **kwargs):
+        user = self.context["request"].user
+        user.set_password(self.validated_data["new_password"])
+        user.save()
+        return user
+
+
+
 # ---------------- UPDATE PROFILE ----------------
 # class UpdateUserSerializer(serializers.ModelSerializer):
 #     class Meta:
