@@ -309,7 +309,8 @@ class BusinessLandlineOrderAdmin(BaseOrderAdmin):
 
         rows = [
             ("1. Product type",  cfg.get("productType"),  money(cfg.get("productPrice")) if cfg.get("productPrice") is not None else ""),
-            ("2. Call allowance", cfg.get("allowance") or cfg.get("dataAllowance"), ""),
+            ("2. Call allowance", cfg.get("allowance") or cfg.get("dataAllowance"),
+             (money(cfg.get("allowancePrice")) + "/mo") if cfg.get("allowancePrice") else ""),
             ("3. Number porting", cfg.get("porting"),     ""),
             ("4. Contract term",  cfg.get("planDuration"), money(cfg.get("contractPrice")) + "/mo" if cfg.get("contractPrice") is not None else ""),
             ("5. Number type",    cfg.get("numberType"),   ""),
