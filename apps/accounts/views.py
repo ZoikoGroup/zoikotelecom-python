@@ -17,7 +17,8 @@ from .serializers import (
     LoginSerializer,
     ForgotPasswordSerializer,
     ResetPasswordSerializer,
-    UpdateUserSerializer
+    UpdateUserSerializer,
+    ChangePasswordSerializer
 )
 
 
@@ -205,6 +206,29 @@ class ResetPasswordAPI(APIView):
             return Response({"message": "Password reset successful"})
 
         return Response({"error": "Invalid or expired token"}, status=400)
+
+
+# ---------------- CHANGE PASSWORD (logged-in user) ----------------
+class ChangePasswordAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(
+            data=request.data,
+            context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # Invalidate old auth token and issue a new one, so other
+        # sessions using the old token are logged out.
+        Token.objects.filter(user=request.user).delete()
+        token = Token.objects.create(user=request.user)
+
+        return Response({
+            "message": "Password changed successfully",
+            "token": token.key
+        })
 
 
 # ---------------- UPDATE PROFILE ----------------
