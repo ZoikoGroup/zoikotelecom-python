@@ -249,10 +249,91 @@ class BusinessLandlineOrderAdmin(BaseOrderAdmin):
         "contract_term", "mail_state_badge", "total", "created_at",
     )
     list_filter = ("mail_status", "payment_method", "created_at")
-    fieldsets = _NONBROADBAND_FIELDSETS
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(order_type=OrderType.BUSINESS_LANDLINE)
+
+    # Read-only summary of the 6 wizard steps (stored in cart_raw).
+    readonly_fields = BaseOrderAdmin.readonly_fields + ("configuration",)
+
+    fieldsets = (
+        ("Identity", {
+            "fields": ("order_type", "external_id", "local_status", "error_message"),
+        }),
+        ("Customer", {
+            "fields": (
+                "first_name", "last_name", "email", "phone", "company_name",
+                ("billing_street", "billing_house_number"),
+                ("billing_city", "billing_region"),
+                ("billing_state", "billing_zip"),
+            ),
+        }),
+        ("Configuration (Digital Landline wizard)", {
+            "fields": ("configuration",),
+        }),
+        ("Notification email", {
+            "fields": (
+                ("mail_required", "mail_status"),
+                ("mail_sent", "mail_sent_at"),
+                "mail_error",
+            ),
+        }),
+        ("Payment", {
+            "fields": (
+                ("subtotal", "discount", "total"), "currency",
+                "payment_method", "agreed_to_terms",
+                ("coupon_code", "coupon_type", "coupon_discount"),
+                "client_created_at",
+            ),
+        }),
+        ("Raw (audit only — do not edit)", {
+            "classes": ("collapse",),
+            "fields": (
+                "cart_raw", "billing_address_raw", "shipping_address_raw",
+                "totals_raw", "coupon_raw", "request_payload_raw",
+            ),
+        }),
+        ("Timestamps", {"fields": ("created_at", "updated_at")}),
+    )
+
+    @admin.display(description="Selected options")
+    def configuration(self, obj):
+        items = obj.cart_raw or []
+        cfg = items[0] if items and isinstance(items[0], dict) else {}
+
+        def money(v):
+            try:
+                return f"£{float(v):.2f}"
+            except (TypeError, ValueError):
+                return "—"
+
+        rows = [
+            ("1. Product type",  cfg.get("productType"),  money(cfg.get("productPrice")) if cfg.get("productPrice") is not None else ""),
+            ("2. Call allowance", cfg.get("allowance") or cfg.get("dataAllowance"), ""),
+            ("3. Number porting", cfg.get("porting"),     ""),
+            ("4. Contract term",  cfg.get("planDuration"), money(cfg.get("contractPrice")) + "/mo" if cfg.get("contractPrice") is not None else ""),
+            ("5. Number type",    cfg.get("numberType"),   ""),
+            ("6. Hardware",       cfg.get("hardware"),     money(cfg.get("hardwarePrice")) if cfg.get("hardwarePrice") else ""),
+        ]
+
+        body = "".join(
+            format_html(
+                '<tr><th style="text-align:left;padding:4px 14px 4px 0;color:#555;font-weight:600;white-space:nowrap;">{}</th>'
+                '<td style="padding:4px 14px 4px 0;">{}</td>'
+                '<td style="padding:4px 0;color:#0a7;font-weight:600;">{}</td></tr>',
+                label, value if value else "—", extra,
+            )
+            for (label, value, extra) in rows
+        )
+        summary = format_html(
+            '<tr><th style="text-align:left;padding:8px 14px 4px 0;color:#111;font-weight:700;border-top:1px solid #eee;">Monthly</th>'
+            '<td style="border-top:1px solid #eee;"></td>'
+            '<td style="padding:8px 0 4px 0;color:#111;font-weight:700;border-top:1px solid #eee;">{}/mo</td></tr>'
+            '<tr><th style="text-align:left;padding:2px 14px 4px 0;color:#111;font-weight:700;">Total charged</th>'
+            '<td></td><td style="padding:2px 0;color:#111;font-weight:700;">{}</td></tr>',
+            money(cfg.get("monthlyPrice")), money(obj.total),
+        )
+        return format_html('<table style="border-collapse:collapse;font-size:13px;">{}{}</table>', body, summary)
 
 
 # ─── Accessories (physical products — no BT, no email) ────────────────────────
