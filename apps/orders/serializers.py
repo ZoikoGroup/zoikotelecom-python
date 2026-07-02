@@ -117,6 +117,8 @@ class BTOrderCreateSerializer(serializers.Serializer):
             "ee_mobile_manual": OrderType.EE_MOBILE,
             "landline":         OrderType.LANDLINE,
             "landline_manual":  OrderType.LANDLINE,
+            "business_landline": OrderType.BUSINESS_LANDLINE,
+            "business-landline": OrderType.BUSINESS_LANDLINE,
             "accessories":      OrderType.ACCESSORIES,
             "accessory":        OrderType.ACCESSORIES,
             "phone_equipment":  OrderType.PHONE_EQUIPMENT,
@@ -151,7 +153,9 @@ class BTOrderCreateSerializer(serializers.Serializer):
             initial_bt_state = ""
 
         # ── Notification email flags ────────────────────────────────────────
-        mail_required = order_type in (OrderType.EE_MOBILE, OrderType.LANDLINE)
+        mail_required = order_type in (
+            OrderType.EE_MOBILE, OrderType.LANDLINE, OrderType.BUSINESS_LANDLINE
+        )
         mail_status = MailStatus.PENDING if mail_required else MailStatus.NOT_REQUIRED
 
         # Pass through anything the caller didn't model, for audit.

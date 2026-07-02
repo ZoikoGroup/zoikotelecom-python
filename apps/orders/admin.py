@@ -7,6 +7,7 @@ from .emails import send_order_notification
 from .models import (
     BTOrder, BTOrderEvent, MailStatus, OrderType,
     EEMobileOrder, LandlineOrder, AccessoriesOrder, PhoneEquipmentOrder,
+    BusinessLandlineOrder,
 )
 
 
@@ -237,6 +238,21 @@ class LandlineOrderAdmin(BaseOrderAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(order_type=OrderType.LANDLINE)
+
+
+# ─── Business Landline (Digital Landline configurator — no BT, email) ─────────
+
+@admin.register(BusinessLandlineOrder)
+class BusinessLandlineOrderAdmin(BaseOrderAdmin):
+    list_display = (
+        "external_id", "email", "product_name",
+        "contract_term", "mail_state_badge", "total", "created_at",
+    )
+    list_filter = ("mail_status", "payment_method", "created_at")
+    fieldsets = _NONBROADBAND_FIELDSETS
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(order_type=OrderType.BUSINESS_LANDLINE)
 
 
 # ─── Accessories (physical products — no BT, no email) ────────────────────────

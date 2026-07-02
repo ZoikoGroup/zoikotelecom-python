@@ -43,6 +43,7 @@ class OrderType(models.TextChoices):
     BROADBAND       = "broadband",       "Broadband"
     EE_MOBILE       = "ee_mobile",        "EE Mobile"
     LANDLINE        = "landline",         "Landline"
+    BUSINESS_LANDLINE = "business_landline", "Business Landline"
     ACCESSORIES     = "accessories",      "Accessories"
     PHONE_EQUIPMENT = "phone_equipment",  "Phone Equipment"
 
@@ -60,11 +61,11 @@ class MailStatus(models.TextChoices):
 class BTOrder(models.Model):
     # ── Identity ────────────────────────────────────────────────────────────
     order_type = models.CharField(
-        max_length=16,
+        max_length=32,
         choices=OrderType.choices,
         default=OrderType.BROADBAND,
         db_index=True,
-        help_text="Product family: broadband (BT Wholesale), EE mobile, or landline.",
+        help_text="Product family: broadband (BT Wholesale), EE mobile, landline, business landline, accessories, or phone equipment.",
     )
     external_id = models.CharField(
         max_length=128,
@@ -298,6 +299,13 @@ class LandlineOrder(BTOrder):
         proxy = True
         verbose_name = "Landline order"
         verbose_name_plural = "Landline orders"
+
+
+class BusinessLandlineOrder(BTOrder):
+    class Meta:
+        proxy = True
+        verbose_name = "Business Landline order"
+        verbose_name_plural = "Business Landline orders"
 
 
 class AccessoriesOrder(BTOrder):
