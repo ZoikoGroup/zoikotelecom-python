@@ -257,3 +257,8 @@ DEFAULT_FROM_EMAIL = "Zoiko Group <info@zoikotelecom.com>"
 
 
 # settings.py cors
+GOOGLE_OAUTH_CLIENT_ID = "176865645984-knv0hv1tlv1h69qkg28os5umse60bplm.apps.googleusercontent.com"
+
+
+FACEBOOK_APP_ID = "1713600470002339"
+FACEBOOK_APP_SECRET = "7f58a97ce5aea2115dee6ca146ed5bd1"
