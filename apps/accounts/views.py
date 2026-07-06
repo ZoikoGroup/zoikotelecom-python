@@ -20,7 +20,19 @@ from .serializers import (
     UpdateUserSerializer,
     ChangePasswordSerializer
 )
+from .social_auth import PROVIDERS, SocialAuthError
 
+
+def _unique_username(email):
+    """Derive a unique, length-safe username from an email local part."""
+    base = (email.split("@")[0] or "user")[:150]
+    username = base
+    counter = 1
+    while User.objects.filter(username=username).exists():
+        suffix = str(counter)
+        username = f"{base[:150 - len(suffix)]}{suffix}"
+        counter += 1
+    return username
 
 # ---------------- REGISTER ----------------
 class RegisterAPI(APIView):
@@ -277,43 +289,90 @@ class UpdateUserAPI(APIView):
 
 
 # ---------------- SOCIAL LOGIN / REGISTER ----------------
+# class SocialUserAPI(APIView):
+#     def post(self, request):
+#         email = request.data.get("email")
+#         first_name = request.data.get("first_name", "")
+#         last_name = request.data.get("last_name", "")
+
+#         if not email:
+#             return Response({"error": "Email is required"}, status=400)
+
+#         # ✅ Check if user exists
+#         user = User.objects.filter(email=email).first()
+
+#         if not user:
+#             # Create user without password
+#             user = User.objects.create_user(
+#                 username=email,
+#                 email=email,
+#                 first_name=first_name,
+#                 last_name=last_name,
+#                 is_active=True  # Social users auto verified
+#             )
+#             user.set_unusable_password()
+#             user.save()
+
+#         # ✅ Create or get token
+#         token, _ = Token.objects.get_or_create(user=user)
+
+#         user_data = {
+#             field.name: getattr(user, field.name)
+#             for field in user._meta.fields
+#         }
+
+#         # Add VC ID (same as login)
+#         user_data['vc_enrollment_id'] = getattr(user.profile, 'vc_enrollment_id', None)
+
+#         return Response({
+#             "message": "Social login successful",
+#             "token": token.key,
+#             "user": user_data
+#         })
 class SocialUserAPI(APIView):
+
     def post(self, request):
-        email = request.data.get("email")
-        first_name = request.data.get("first_name", "")
-        last_name = request.data.get("last_name", "")
+        provider = (request.data.get("provider") or "").lower()
+        access_token = request.data.get("access_token")
 
-        if not email:
-            return Response({"error": "Email is required"}, status=400)
+        verify = PROVIDERS.get(provider)
+        if not verify:
+            return Response({"error": "Unsupported or missing provider"}, status=400)
+        if not access_token:
+            return Response({"error": "access_token is required"}, status=400)
 
-        # ✅ Check if user exists
-        user = User.objects.filter(email=email).first()
+        try:
+            profile = verify(access_token)
+        except SocialAuthError as exc:
+            return Response({"error": str(exc)}, status=400)
 
+        email = profile["email"]
+
+        # Find-or-create by verified email (case-insensitive to avoid duplicates).
+        user = User.objects.filter(email__iexact=email).first()
         if not user:
-            # Create user without password
             user = User.objects.create_user(
-                username=email,
+                username=_unique_username(email),
                 email=email,
-                first_name=first_name,
-                last_name=last_name,
-                is_active=True  # Social users auto verified
+                first_name=profile.get("first_name", ""),
+                last_name=profile.get("last_name", ""),
+                is_active=True,  # social accounts are pre-verified by the provider
             )
             user.set_unusable_password()
             user.save()
 
-        # ✅ Create or get token
         token, _ = Token.objects.get_or_create(user=user)
 
         user_data = {
             field.name: getattr(user, field.name)
             for field in user._meta.fields
         }
-
-        # Add VC ID (same as login)
-        user_data['vc_enrollment_id'] = getattr(user.profile, 'vc_enrollment_id', None)
+        user_data["vc_enrollment_id"] = getattr(
+            getattr(user, "profile", None), "vc_enrollment_id", None
+        )
 
         return Response({
             "message": "Social login successful",
             "token": token.key,
-            "user": user_data
+            "user": user_data,
         })
