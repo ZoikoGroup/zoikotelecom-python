@@ -24,6 +24,7 @@ logger = logging.getLogger("apps.orders")
 DEFAULT_ORDERS_INBOX = "orders@zoikotelecom.com"
 
 
+
 def _orders_inbox() -> str:
     return getattr(settings, "ORDERS_NOTIFICATION_EMAIL", "") or DEFAULT_ORDERS_INBOX
 
