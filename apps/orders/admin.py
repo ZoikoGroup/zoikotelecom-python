@@ -3,9 +3,9 @@ from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 
-from .emails import send_order_notification
+from .emails import send_order_confirmation, send_order_notification
 from .models import (
-    BTOrder, BTOrderEvent, MailStatus, OrderType,
+    BTOrder, BTOrderEvent, ConfirmationStatus, MailStatus, OrderType,
     EEMobileOrder, LandlineOrder, AccessoriesOrder, PhoneEquipmentOrder,
     BusinessLandlineOrder,
 )
@@ -41,13 +41,14 @@ class BaseOrderAdmin(admin.ModelAdmin):
         "external_id", "bt_order_id",
         "created_at", "updated_at",
         "mail_sent", "mail_sent_at", "mail_error",
+        "confirmation_sent", "confirmation_sent_at", "confirmation_error",
         "cart_raw", "service_address_raw", "billing_address_raw",
         "shipping_address_raw", "totals_raw", "coupon_raw",
         "bt_response_raw", "request_payload_raw",
     )
 
     inlines = [BTOrderEventInline]
-    actions = ["resend_notification_email"]
+    actions = ["resend_notification_email", "resend_confirmation_email"]
 
     # ── Badges ──────────────────────────────────────────────────────────────
     @admin.display(description="Mail", ordering="mail_status")
@@ -75,6 +76,21 @@ class BaseOrderAdmin(admin.ModelAdmin):
         return format_html(
             '<span style="background:{};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">{}</span>',
             colour, obj.bt_state or "—",
+        )
+
+    @admin.display(description="Confirmation", ordering="confirmation_status")
+    def confirmation_state_badge(self, obj):
+        if obj.confirmation_status == ConfirmationStatus.SENT:
+            colour, label = "#0a0", "Sent"
+        elif obj.confirmation_status == ConfirmationStatus.FAILED:
+            colour, label = "#c33", "Failed"
+        elif obj.confirmation_status == ConfirmationStatus.SKIPPED:
+            colour, label = "#999", "No email"
+        else:
+            colour, label = "#c80", "Pending"
+        return format_html(
+            '<span style="background:{};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">{}</span>',
+            colour, label,
         )
 
     # ── Resend notification email ─────────────────────────────────────────────
@@ -105,6 +121,37 @@ class BaseOrderAdmin(admin.ModelAdmin):
             f"Notification email — sent: {sent}, failed: {failed}, skipped (broadband): {skipped}.",
         )
 
+    # ── Resend customer confirmation email ────────────────────────────────────
+    @admin.action(description="Resend customer confirmation email")
+    def resend_confirmation_email(self, request, queryset):
+        sent = failed = skipped = 0
+        for order in queryset:
+            if not order.email:
+                order.confirmation_status = ConfirmationStatus.SKIPPED
+                order.save(update_fields=["confirmation_status", "updated_at"])
+                skipped += 1
+                continue
+            ok, err = send_order_confirmation(order)
+            order.confirmation_sent    = ok
+            order.confirmation_status  = ConfirmationStatus.SENT if ok else ConfirmationStatus.FAILED
+            order.confirmation_error   = "" if ok else (err or "Unknown error")
+            order.confirmation_sent_at = timezone.now() if ok else order.confirmation_sent_at
+            order.save(update_fields=[
+                "confirmation_sent", "confirmation_status",
+                "confirmation_error", "confirmation_sent_at", "updated_at",
+            ])
+            BTOrderEvent.objects.create(
+                order=order, external_id=order.external_id,
+                source=BTOrderEvent.Source.MANUAL, event_type="ConfirmationEmailResend",
+                state="sent" if ok else "failed", message="" if ok else (err or ""),
+            )
+            sent += int(ok)
+            failed += int(not ok)
+        self.message_user(
+            request,
+            f"Confirmation email — sent: {sent}, failed: {failed}, skipped (no email): {skipped}.",
+        )
+
 
 # ─── Broadband (BT Wholesale) ─────────────────────────────────────────────────
 
@@ -112,10 +159,10 @@ class BaseOrderAdmin(admin.ModelAdmin):
 class BroadbandOrderAdmin(BaseOrderAdmin):
     list_display = (
         "external_id", "email", "product_offering_id",
-        "local_status", "bt_state_badge", "total",
+        "local_status", "bt_state_badge", "confirmation_state_badge", "total",
         "appointment_start", "created_at",
     )
-    list_filter = ("local_status", "bt_state", "payment_method", "created_at")
+    list_filter = ("local_status", "bt_state", "confirmation_status", "payment_method", "created_at")
 
     fieldsets = (
         ("Identity", {
@@ -152,6 +199,13 @@ class BroadbandOrderAdmin(BaseOrderAdmin):
                 "payment_method", "agreed_to_terms",
                 ("coupon_code", "coupon_type", "coupon_discount"),
                 "client_created_at",
+            ),
+        }),
+        ("Customer confirmation email", {
+            "fields": (
+                ("confirmation_sent", "confirmation_status"),
+                "confirmation_sent_at",
+                "confirmation_error",
             ),
         }),
         ("Raw (audit only — do not edit)", {
@@ -194,6 +248,13 @@ _NONBROADBAND_FIELDSETS = (
             "mail_error",
         ),
     }),
+    ("Customer confirmation email", {
+        "fields": (
+            ("confirmation_sent", "confirmation_status"),
+            "confirmation_sent_at",
+            "confirmation_error",
+        ),
+    }),
     ("Payment", {
         "fields": (
             ("subtotal", "discount", "total"), "currency",
@@ -217,10 +278,10 @@ _NONBROADBAND_FIELDSETS = (
 class EEMobileOrderAdmin(BaseOrderAdmin):
     list_display = (
         "external_id", "email", "product_name",
-        "data_allowance", "sim_type", "mail_state_badge",
+        "data_allowance", "sim_type", "mail_state_badge", "confirmation_state_badge",
         "total", "created_at",
     )
-    list_filter = ("mail_status", "sim_type", "payment_method", "created_at")
+    list_filter = ("mail_status", "confirmation_status", "sim_type", "payment_method", "created_at")
     fieldsets = _NONBROADBAND_FIELDSETS
 
     def get_queryset(self, request):
@@ -231,9 +292,9 @@ class EEMobileOrderAdmin(BaseOrderAdmin):
 class LandlineOrderAdmin(BaseOrderAdmin):
     list_display = (
         "external_id", "email", "product_name",
-        "mail_state_badge", "total", "created_at",
+        "mail_state_badge", "confirmation_state_badge", "total", "created_at",
     )
-    list_filter = ("mail_status", "payment_method", "created_at")
+    list_filter = ("mail_status", "confirmation_status", "payment_method", "created_at")
     fieldsets = _NONBROADBAND_FIELDSETS
 
     def get_queryset(self, request):
@@ -246,9 +307,9 @@ class LandlineOrderAdmin(BaseOrderAdmin):
 class BusinessLandlineOrderAdmin(BaseOrderAdmin):
     list_display = (
         "external_id", "email", "product_name",
-        "contract_term", "mail_state_badge", "total", "created_at",
+        "contract_term", "mail_state_badge", "confirmation_state_badge", "total", "created_at",
     )
-    list_filter = ("mail_status", "payment_method", "created_at")
+    list_filter = ("mail_status", "confirmation_status", "payment_method", "created_at")
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(order_type=OrderType.BUSINESS_LANDLINE)
@@ -276,6 +337,13 @@ class BusinessLandlineOrderAdmin(BaseOrderAdmin):
                 ("mail_required", "mail_status"),
                 ("mail_sent", "mail_sent_at"),
                 "mail_error",
+            ),
+        }),
+        ("Customer confirmation email", {
+            "fields": (
+                ("confirmation_sent", "confirmation_status"),
+                "confirmation_sent_at",
+                "confirmation_error",
             ),
         }),
         ("Payment", {
@@ -344,10 +412,10 @@ class BusinessLandlineOrderAdmin(BaseOrderAdmin):
 class AccessoriesOrderAdmin(BaseOrderAdmin):
     list_display = (
         "product_thumb", "external_id", "email", "product_name",
-        "total", "created_at",
+        "mail_state_badge", "confirmation_state_badge", "total", "created_at",
     )
     list_display_links = ("external_id", "product_name")
-    list_filter = ("payment_method", "created_at")
+    list_filter = ("mail_status", "confirmation_status", "payment_method", "created_at")
     readonly_fields = BaseOrderAdmin.readonly_fields + ("product_image",)
 
     fieldsets = (
@@ -367,6 +435,20 @@ class AccessoriesOrderAdmin(BaseOrderAdmin):
         }),
         ("Shipping", {
             "fields": ("shipping_address_raw",),
+        }),
+        ("Notification email", {
+            "fields": (
+                ("mail_required", "mail_status"),
+                ("mail_sent", "mail_sent_at"),
+                "mail_error",
+            ),
+        }),
+        ("Customer confirmation email", {
+            "fields": (
+                ("confirmation_sent", "confirmation_status"),
+                "confirmation_sent_at",
+                "confirmation_error",
+            ),
         }),
         ("Payment", {
             "fields": (

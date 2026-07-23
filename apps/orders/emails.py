@@ -28,6 +28,19 @@ def _orders_inbox() -> str:
     return getattr(settings, "ORDERS_NOTIFICATION_EMAIL", "") or DEFAULT_ORDERS_INBOX
 
 
+# Symbol lookup for the customer-facing confirmation. The stored currency is
+# GBP by default (see BTOrder.currency); we fall back to "£" for anything we
+# don't recognise so a receipt never shows a bare code.
+_CURRENCY_SYMBOLS = {
+    "GBP": "£", "USD": "$", "EUR": "€", "AUD": "$", "CAD": "$", "NZD": "$",
+}
+
+
+def _currency_symbol(order) -> str:
+    code = (getattr(order, "currency", "") or "GBP").upper()
+    return _CURRENCY_SYMBOLS.get(code, "£")
+
+
 def _line(label: str, value) -> str:
     value = "" if value is None else str(value)
     return f"{label}: {value}"
@@ -154,4 +167,146 @@ def send_order_notification(order) -> tuple[bool, str]:
         return False, "Email backend reported 0 messages sent."
     except Exception as exc:  # noqa: BLE001 — must never break the order save
         logger.exception("[orders] Notification email failed for %s: %s", order.external_id, exc)
+        return False, str(exc)
+
+
+# ─── Customer confirmation email (ALL order types) ────────────────────────────
+#
+# The receipt sent to the *customer* after checkout. The success screen already
+# promises "a confirmation email has been sent to <you>", so this must fire for
+# every order type. Like send_order_notification it never raises — it returns
+# (ok, error) so the caller can record the outcome without ever blocking the
+# order save.
+
+
+def build_order_confirmation_body(order) -> tuple[str, str]:
+    """Return (plain_text, html) bodies for the customer confirmation receipt."""
+    sym = _currency_symbol(order)
+    type_label = order.get_order_type_display()
+    full_name = " ".join(p for p in [order.first_name, order.last_name] if p).strip()
+    greeting_name = order.first_name or full_name or "there"
+
+    # Line items from the raw cart (same shape the notification uses).
+    item_lines: list[str] = []
+    item_rows_html: list[str] = []
+    for it in order.cart_raw or []:
+        if not isinstance(it, dict):
+            continue
+        name = it.get("name") or it.get("planName") or it.get("title") or "Item"
+        price = it.get("price") or it.get("finalPrice") or it.get("pricePerUnit") or ""
+        bits = [str(name)]
+        if it.get("planDuration") or it.get("validity"):
+            bits.append(f"· {it.get('planDuration') or it.get('validity')}")
+        if it.get("dataAllowance"):
+            bits.append(f"· {it.get('dataAllowance')}")
+        if it.get("simType"):
+            bits.append(f"· {it.get('simType')}")
+        if it.get("speed"):
+            bits.append(f"· {it.get('speed')} Mbps")
+        price_txt = f"{sym}{price}" if price != "" else ""
+        if price_txt:
+            bits.append(f"— {price_txt}")
+        item_lines.append("  " + " ".join(bits))
+        item_rows_html.append(
+            f"<tr><td style='padding:6px 0;border-bottom:1px solid #f0f0f0'>{name}</td>"
+            f"<td style='padding:6px 0;border-bottom:1px solid #f0f0f0;text-align:right'>{price_txt or '—'}</td></tr>"
+        )
+    items_block = "\n".join(item_lines) or "  (no items)"
+    items_html = "".join(item_rows_html) or (
+        "<tr><td style='padding:6px 0'>(no items)</td><td></td></tr>"
+    )
+
+    # What-happens-next differs by product family.
+    if order.order_type in ("accessories", "phone_equipment"):
+        next_step = "We're preparing your order for dispatch and will email you tracking details once it ships."
+    elif order.order_type == "broadband":
+        next_step = "We're processing your broadband order. We'll be in touch about your installation and appointment."
+    else:
+        next_step = "Our team is now setting up your service and will be in touch shortly with the next steps."
+
+    text = "\n".join([
+        f"Hi {greeting_name},",
+        "",
+        f"Thanks for your order with Zoiko Telecom — we've received it successfully.",
+        "",
+        _line("Order reference", order.external_id),
+        _line("Order type", type_label),
+        "",
+        next_step,
+        "",
+        "Order summary",
+        "-" * 20,
+        items_block,
+        "",
+        _line("Subtotal", f"{sym}{order.subtotal}"),
+        _line("Discount", f"{sym}{order.discount}"),
+        _line("Total paid", f"{sym}{order.total}"),
+        "",
+        "If anything looks wrong, just reply to this email and we'll help.",
+        "",
+        "— Zoiko Telecom",
+    ])
+
+    html = (
+        f"<div style='font-family:Arial,sans-serif;font-size:14px;color:#222;max-width:560px'>"
+        f"<h2 style='color:#c61b7f;margin:0 0 4px'>Thanks for your order!</h2>"
+        f"<p style='margin:0 0 16px;color:#555'>Hi {greeting_name}, we've received your "
+        f"{type_label} order successfully.</p>"
+        f"<table style='border-collapse:collapse;margin-bottom:16px'>"
+        f"<tr><td style='padding:2px 12px 2px 0;color:#555'>Order reference</td>"
+        f"<td style='padding:2px 0'><strong>{order.external_id}</strong></td></tr>"
+        f"</table>"
+        f"<p style='margin:0 0 16px;color:#333'>{next_step}</p>"
+        f"<h3 style='margin:16px 0 6px'>Order summary</h3>"
+        f"<table style='border-collapse:collapse;width:100%'>{items_html}"
+        f"<tr><td style='padding:8px 0;font-weight:600'>Total paid</td>"
+        f"<td style='padding:8px 0;font-weight:700;text-align:right'>{sym}{order.total}</td></tr>"
+        f"</table>"
+        f"<p style='margin:18px 0 0;color:#777;font-size:13px'>If anything looks wrong, "
+        f"just reply to this email and we'll help.</p>"
+        f"<p style='margin:8px 0 0;color:#c61b7f;font-weight:600'>— Zoiko Telecom</p>"
+        f"</div>"
+    )
+    return text, html
+
+
+def send_order_confirmation(order) -> tuple[bool, str]:
+    """
+    Email the *customer* their order receipt. Fires for every order type.
+
+    Returns (ok, error). Never raises.
+    """
+    try:
+        if not order.email:
+            return False, "Order has no customer email address."
+
+        type_label = order.get_order_type_display()
+        subject = f"Your Zoiko Telecom order — {order.external_id}"
+        text_body, html_body = build_order_confirmation_body(order)
+
+        # Same hard timeout rationale as the notification email: a slow SMTP
+        # host must never hang the checkout request.
+        timeout = getattr(settings, "ORDERS_EMAIL_TIMEOUT", None) \
+            or getattr(settings, "EMAIL_TIMEOUT", None) or 15
+        connection = get_connection(timeout=timeout)
+
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=text_body,
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+            to=[order.email],
+            reply_to=[_orders_inbox()],
+            connection=connection,
+        )
+        msg.attach_alternative(html_body, "text/html")
+        sent = msg.send(fail_silently=False)
+
+        if sent:
+            logger.info("[orders] Confirmation email sent to customer for %s", order.external_id)
+            return True, ""
+
+        logger.warning("[orders] Confirmation email returned 0 for %s", order.external_id)
+        return False, "Email backend reported 0 messages sent."
+    except Exception as exc:  # noqa: BLE001 — must never break the order save
+        logger.exception("[orders] Confirmation email failed for %s: %s", order.external_id, exc)
         return False, str(exc)

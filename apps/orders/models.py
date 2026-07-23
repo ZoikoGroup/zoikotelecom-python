@@ -56,6 +56,16 @@ class MailStatus(models.TextChoices):
     FAILED       = "failed",       "Mail not send"   # attempted, SMTP failed
 
 
+class ConfirmationStatus(models.TextChoices):
+    """Customer-facing confirmation-email state. Sent for *every* order type
+    (the customer always expects a receipt), separate from the internal
+    fulfilment notification tracked by MailStatus."""
+    PENDING = "pending", "Pending"                   # not yet attempted
+    SENT    = "sent",    "Sent"
+    FAILED  = "failed",  "Failed"                    # attempted, SMTP failed
+    SKIPPED = "skipped", "Skipped (no email)"        # order had no customer email
+
+
 # ─── Main order ───────────────────────────────────────────────────────────────
 
 class BTOrder(models.Model):
@@ -158,6 +168,21 @@ class BTOrder(models.Model):
     )
     mail_error   = models.TextField(blank=True, help_text="SMTP error if the email failed to send.")
     mail_sent_at = models.DateTimeField(null=True, blank=True)
+
+    # ── Customer confirmation email (ALL order types) ───────────────────────
+    # The "we've received your order" receipt sent to the customer. Distinct
+    # from mail_* above, which notifies the internal fulfilment inbox.
+    confirmation_sent    = models.BooleanField(default=False)
+    confirmation_status  = models.CharField(
+        max_length=16,
+        choices=ConfirmationStatus.choices,
+        default=ConfirmationStatus.PENDING,
+        db_index=True,
+    )
+    confirmation_error   = models.TextField(
+        blank=True, help_text="SMTP error if the customer confirmation failed to send.",
+    )
+    confirmation_sent_at = models.DateTimeField(null=True, blank=True)
 
     # ── Appointment ─────────────────────────────────────────────────────────
     appointment_id    = models.CharField(max_length=64, blank=True, db_index=True)
