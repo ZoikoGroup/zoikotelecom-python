@@ -18,8 +18,8 @@ from rest_framework import status, views
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from .emails import send_order_notification
-from .models import BTOrder, BTOrderEvent, BTOrderState, MailStatus
+from .emails import send_order_confirmation, send_order_notification
+from .models import BTOrder, BTOrderEvent, BTOrderState, ConfirmationStatus, MailStatus
 from .serializers import (
     BTOrderCreateSerializer,
     BTOrderReadSerializer,
@@ -103,6 +103,35 @@ class BTOrderCreateView(views.APIView):
                 state       = "sent" if ok else "failed",
                 message     = "" if ok else (err or "Unknown error"),
             )
+
+        # ── Customer confirmation email (ALL order types) ───────────────────
+        # The receipt the customer expects (the success screen promises it).
+        # Never blocks the save: on SMTP failure we record confirmation_status
+        # = FAILED and still return 201. Orders with no email are SKIPPED.
+        if not order.confirmation_sent:
+            if order.email:
+                cok, cerr = send_order_confirmation(order)
+                order.confirmation_sent    = cok
+                order.confirmation_status  = (
+                    ConfirmationStatus.SENT if cok else ConfirmationStatus.FAILED
+                )
+                order.confirmation_error   = "" if cok else (cerr or "Unknown error")
+                order.confirmation_sent_at = timezone.now() if cok else None
+                order.save(update_fields=[
+                    "confirmation_sent", "confirmation_status",
+                    "confirmation_error", "confirmation_sent_at", "updated_at",
+                ])
+                BTOrderEvent.objects.create(
+                    order       = order,
+                    external_id = order.external_id,
+                    source      = BTOrderEvent.Source.SYSTEM,
+                    event_type  = "ConfirmationEmail",
+                    state       = "sent" if cok else "failed",
+                    message     = "" if cok else (cerr or "Unknown error"),
+                )
+            else:
+                order.confirmation_status = ConfirmationStatus.SKIPPED
+                order.save(update_fields=["confirmation_status", "updated_at"])
 
         return Response(
             {

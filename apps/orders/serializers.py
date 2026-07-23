@@ -153,8 +153,14 @@ class BTOrderCreateSerializer(serializers.Serializer):
             initial_bt_state = ""
 
         # ── Notification email flags ────────────────────────────────────────
+        # All non-broadband families notify the fulfilment inbox: EE mobile /
+        # landline / business landline have no downstream system, and the
+        # physical goods (accessories / phone equipment) need someone to
+        # pick, pack and ship them. Broadband is excluded — BT Wholesale
+        # handles it via the webhook lifecycle.
         mail_required = order_type in (
-            OrderType.EE_MOBILE, OrderType.LANDLINE, OrderType.BUSINESS_LANDLINE
+            OrderType.EE_MOBILE, OrderType.LANDLINE, OrderType.BUSINESS_LANDLINE,
+            OrderType.ACCESSORIES, OrderType.PHONE_EQUIPMENT,
         )
         mail_status = MailStatus.PENDING if mail_required else MailStatus.NOT_REQUIRED
 
