@@ -252,7 +252,7 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = "info@zoikotelecom.com"
 EMAIL_HOST_PASSWORD = "NoxxMC26070%!LGM"
 
-DEFAULT_FROM_EMAIL = "Zoiko Group <info@zoikotelecom.com>"
+DEFAULT_FROM_EMAIL = "Zoiko Telecom <info@zoikotelecom.com>"
 
 
 
